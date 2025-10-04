@@ -1,0 +1,46 @@
+.drawer {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 20px;
+    transition: left 0.3s ease;
+    z-index: 1000;
+
+    &.open {
+        left: 0;
+    }
+
+    .menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+
+            &:hover {
+                color: #4fc3f7;
+            }
+        }
+    }
+}
+
+.drawer-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+}

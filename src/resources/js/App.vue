@@ -1,12 +1,7 @@
 <template>
-  <h1>Hello from Vue in Laravel!</h1>
+  <MainOffice />
 </template>
 
 <script setup>
+import MainOffice from './views/MainOffice.vue'
 </script>
-
-<style scoped>
-h1 {
-  color: #42b983;
-}
-</style>
