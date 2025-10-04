@@ -1,0 +1,23 @@
+.office-bg {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+
+    background: url("@/assets/office-bg.jpg") no-repeat center center;
+    background-size: cover; // 切らずに全体を表示
+    background-color: #727272; // 余白部分を黒で埋める（必要なら白やグレーでも可）
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.office-layer {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
