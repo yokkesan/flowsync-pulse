@@ -1,7 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// ログイントップページ
+Route::get('/', function () { return Inertia::render('login/LoginTop'); })->name('login.top');
+
+// ログインフォーム
+Route::get('/login', function () { return Inertia::render('login/Register'); })->name('login.form');
+
+// 新規登録 Step1
+Route::get('/register/step1', function () { return Inertia::render('login/RegisterStep1'); })->name('register.step1');
