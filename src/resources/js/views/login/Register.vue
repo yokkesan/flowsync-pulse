@@ -26,22 +26,18 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
-// ログインフォームデータ
 const form = ref({
-    email: '',
-    password: ''
+  email: '',
+  password: ''
 })
 
-// 仮送信処理（まだLaravel連携前）
 const submit = () => {
-    console.log('ログイン試行', form.value)
+  router.visit('/office')
 }
 
-// 戻るボタン
 const backToTop = () => {
-    router.visit('/')
+  router.visit('/')
 }
 
-// SCSS 読み込み
 import '@/../css/loginForm.scss'
 </script>

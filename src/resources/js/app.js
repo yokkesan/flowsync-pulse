@@ -7,6 +7,9 @@ import '../css/mainOffice.scss';
 import '../css/sideDrawer.scss';
 import '../css/loginTop.scss'; // ← LoginTop用（存在する場合）
 import '../css/loginForm.scss'
+import '../css/registerStep1.scss'
+import '../css/registerStep2.scss'
+import '../css/registerStep3.scss'
 
 createInertiaApp({
     resolve: (name) =>
