@@ -1,0 +1,47 @@
+.login-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f6f8fa;
+
+    .title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        color: #222;
+    }
+
+    .btn-area {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .btn {
+        padding: 0.8rem 2.2rem;
+        border-radius: 8px;
+        border: none;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.2s ease all;
+
+        &.btn-login {
+            background-color: #007bff;
+            color: #fff;
+
+            &:hover {
+                background-color: #0069d9;
+            }
+        }
+
+        &.btn-register {
+            background-color: #28a745;
+            color: #fff;
+
+            &:hover {
+                background-color: #218838;
+            }
+        }
+    }
+}
