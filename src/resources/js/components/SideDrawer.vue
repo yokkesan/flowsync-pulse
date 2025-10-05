@@ -8,8 +8,8 @@
         </ul>
     </div>
 
-    <!-- トグルボタン -->
-    <button class="drawer-toggle" @click="$emit('toggle')">
+    <!-- ハンバーガー -->
+    <button class="drawer-toggle" :class="{ 'drawer-toggle--shifted': isOpen }" @click="$emit('toggle')">
         ☰
     </button>
 </template>
