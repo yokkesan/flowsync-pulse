@@ -1,0 +1,14 @@
+@use './variables' as variables;
+
+@mixin surface {
+    background: variables.$color-surface;
+    border: 1px solid variables.$color-border;
+    border-radius: 14px;
+    box-shadow: variables.$shadow-surface;
+}
+
+@mixin mobile {
+    @media (max-width: variables.$breakpoint-mobile) {
+        @content;
+    }
+}

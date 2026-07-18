@@ -1,0 +1,54 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.office-switcher {
+    @include mixins.surface;
+
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    overflow-x: auto;
+
+    &__button {
+        flex: 0 0 auto;
+        min-height: 42px;
+        padding: 0 18px;
+        color: variables.$color-text-secondary;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+            color 160ms ease,
+            background-color 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease;
+
+        &:hover {
+            color: variables.$color-primary-dark;
+            background: variables.$color-primary-soft;
+            border-color: variables.$color-primary-border;
+        }
+
+        &:focus-visible {
+            outline: 3px solid rgb(49 87 200 / 25%);
+            outline-offset: 2px;
+        }
+
+        &--active {
+            color: #ffffff;
+            background: variables.$color-primary;
+            border-color: variables.$color-primary;
+            box-shadow: 0 6px 16px rgb(49 87 200 / 24%);
+
+            &:hover {
+                color: #ffffff;
+                background: variables.$color-primary-dark;
+                border-color: variables.$color-primary-dark;
+            }
+        }
+    }
+}

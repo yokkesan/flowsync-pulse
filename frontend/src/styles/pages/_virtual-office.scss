@@ -1,0 +1,124 @@
+@use '../foundation/variables' as variables;
+@use '../foundation/mixins' as mixins;
+
+.virtual-office-page {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 12px;
+    width: 100%;
+    min-height: 100vh;
+    padding: 16px;
+    color: variables.$color-text-primary;
+    background: variables.$color-background;
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+    }
+
+    &__header {
+        @include mixins.surface;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 64px;
+        padding: 10px 16px;
+    }
+
+    &__heading {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__service-name {
+        margin: 0;
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.3;
+    }
+
+    &__connection {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    &__connection-indicator {
+        width: 10px;
+        height: 10px;
+        background: variables.$color-success;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgb(34 197 94 / 14%);
+    }
+
+    &__scene {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        background: variables.$color-surface-muted;
+        border: 1px solid variables.$color-border;
+        border-radius: 18px;
+        box-shadow: variables.$shadow-large;
+        isolation: isolate;
+
+        &--main-office {
+            background-color: #f4eadb;
+        }
+
+        &--meeting-room {
+            background-color: #e6edf8;
+        }
+
+        &--officer-room {
+            background-color: #eee3d6;
+        }
+    }
+
+    &__background {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 480px;
+        object-fit: cover;
+        object-position: center;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    &__avatar-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    @include mixins.mobile {
+        padding: 8px;
+
+        &__header {
+            align-items: flex-start;
+        }
+
+        &__title {
+            font-size: 18px;
+        }
+
+        &__background {
+            min-height: 420px;
+        }
+    }
+}
