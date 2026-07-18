@@ -1,14 +1,6 @@
 package main
 
-import (
-	"database/sql"
-	"fmt"
-	"net/http"
-	"os"
-
-	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
-)
+import ( "database/sql" "fmt" "net/http" "os" "flowsync-pulse/backend/internal/user" "github.com/gin-gonic/gin" _ "github.com/go-sql-driver/mysql" )
 
 func main() {
 	db, err := connectDB()
@@ -18,6 +10,15 @@ func main() {
 	defer db.Close()
 
 	router := gin.Default()
+
+	userRepository := user.NewRepository(db)
+	userService := user.NewService(userRepository)
+	userHandler := user.NewHandler(userService)
+
+	router.POST(
+		"/api/auth/register",
+		userHandler.RegisterCompanyOwner,
+	)
 
 	router.GET("/api/health", func(c *gin.Context) {
 		if err := db.Ping(); err != nil {
