@@ -2,6 +2,8 @@
 @use './foundation/mixins';
 
 @use './pages/virtual-office';
+@use './components/office/office-avatar';
+@use './pages/register';
 
 @use './components/office/office-switcher';
 @use './components/office/office-controls';

@@ -3,25 +3,25 @@ package user
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 )
+
+var ErrCompanyNotFound = errors.New("company not found")
 
 type Repository struct {
 	db *sql.DB
 }
 
-type CreateCompanyOwnerParams struct {
-	CompanyName  string
-	CompanySlug  string
+type RegisterParams struct {
+	CompanyID    uint64
 	DisplayName  string
 	Email        string
 	PasswordHash string
-	AvatarKey    string
 }
 
-type CreateCompanyOwnerResult struct {
-	UserID    uint64
-	CompanyID uint64
+type RegisterResult struct {
+	UserID uint64
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -30,13 +30,13 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
-func (r *Repository) CreateCompanyOwner(
+func (r *Repository) Register(
 	ctx context.Context,
-	params CreateCompanyOwnerParams,
-) (CreateCompanyOwnerResult, error) {
+	params RegisterParams,
+) (RegisterResult, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
+		return RegisterResult{}, fmt.Errorf(
 			"failed to begin transaction: %w",
 			err,
 		)
@@ -46,32 +46,29 @@ func (r *Repository) CreateCompanyOwner(
 		_ = tx.Rollback()
 	}()
 
-	companyResult, err := tx.ExecContext(
+	var companyExists bool
+
+	err = tx.QueryRowContext(
 		ctx,
 		`
-			INSERT INTO companies (
-				name,
-				slug,
-				status
+			SELECT EXISTS (
+				SELECT 1
+				FROM companies
+				WHERE id = ?
+				  AND status = 'active'
 			)
-			VALUES (?, ?, 'active')
 		`,
-		params.CompanyName,
-		params.CompanySlug,
-	)
+		params.CompanyID,
+	).Scan(&companyExists)
 	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
-			"failed to create company: %w",
+		return RegisterResult{}, fmt.Errorf(
+			"failed to check company: %w",
 			err,
 		)
 	}
 
-	companyID, err := companyResult.LastInsertId()
-	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
-			"failed to get company id: %w",
-			err,
-		)
+	if !companyExists {
+		return RegisterResult{}, ErrCompanyNotFound
 	}
 
 	userResult, err := tx.ExecContext(
@@ -85,15 +82,14 @@ func (r *Repository) CreateCompanyOwner(
 				avatar_key,
 				status
 			)
-			VALUES (?, ?, ?, 'preset', NULLIF(?, ''), 'active')
+			VALUES (?, ?, ?, 'preset', NULL, 'active')
 		`,
 		params.DisplayName,
 		params.Email,
 		params.PasswordHash,
-		params.AvatarKey,
 	)
 	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
+		return RegisterResult{}, fmt.Errorf(
 			"failed to create user: %w",
 			err,
 		)
@@ -101,7 +97,7 @@ func (r *Repository) CreateCompanyOwner(
 
 	userID, err := userResult.LastInsertId()
 	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
+		return RegisterResult{}, fmt.Errorf(
 			"failed to get user id: %w",
 			err,
 		)
@@ -119,25 +115,24 @@ func (r *Repository) CreateCompanyOwner(
 			)
 			VALUES (?, ?, 'owner', 'active', CURRENT_TIMESTAMP)
 		`,
-		companyID,
+		params.CompanyID,
 		userID,
 	)
 	if err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
+		return RegisterResult{}, fmt.Errorf(
 			"failed to create company membership: %w",
 			err,
 		)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return CreateCompanyOwnerResult{}, fmt.Errorf(
+		return RegisterResult{}, fmt.Errorf(
 			"failed to commit transaction: %w",
 			err,
 		)
 	}
 
-	return CreateCompanyOwnerResult{
-		UserID:    uint64(userID),
-		CompanyID: uint64(companyID),
+	return RegisterResult{
+		UserID: uint64(userID),
 	}, nil
 }
