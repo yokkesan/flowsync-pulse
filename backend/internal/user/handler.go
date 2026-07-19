@@ -2,7 +2,9 @@ package user
 
 import (
 	"errors"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
@@ -18,19 +20,31 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
-func (h *Handler) RegisterCompanyOwner(c *gin.Context) {
-	var request RegisterRequest
-
-	if err := c.ShouldBindJSON(&request); err != nil {
+func (h *Handler) Register(c *gin.Context) {
+	companyID, err := strconv.ParseUint(
+		c.Param("companyId"),
+		10,
+		64,
+	)
+	if err != nil || companyID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "入力内容を確認してください。",
-			"error":   err.Error(),
+			"message": "会社IDが正しくありません。",
 		})
 		return
 	}
 
-	response, err := h.service.RegisterCompanyOwner(
+	var request RegisterRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "ユーザー情報を正しく入力してください。",
+		})
+		return
+	}
+
+	response, err := h.service.Register(
 		c.Request.Context(),
+		companyID,
 		request,
 	)
 	if err != nil {
@@ -41,21 +55,28 @@ func (h *Handler) RegisterCompanyOwner(c *gin.Context) {
 			})
 			return
 
-		case errors.Is(err, ErrInvalidCompanySlug):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "会社スラッグの形式が正しくありません。",
+		case errors.Is(err, ErrCompanyNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "登録先の会社が見つかりません。",
 			})
 			return
 		}
 
 		var mysqlError *mysql.MySQLError
 
-		if errors.As(err, &mysqlError) && mysqlError.Number == 1062 {
+		if errors.As(err, &mysqlError) &&
+			mysqlError.Number == 1062 {
 			c.JSON(http.StatusConflict, gin.H{
-				"message": "メールアドレスまたは会社スラッグが既に登録されています。",
+				"message": "このメールアドレスは既に登録されています。",
 			})
 			return
 		}
+
+		log.Printf(
+			"failed to register user: company_id=%d error=%v",
+			companyID,
+			err,
+		)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "ユーザー登録に失敗しました。",

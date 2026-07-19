@@ -24,6 +24,7 @@ services:
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
+      FRONTEND_ORIGIN: "http://localhost:${FRONTEND_PORT}"
     volumes:
       - ./backend:/app
     depends_on:

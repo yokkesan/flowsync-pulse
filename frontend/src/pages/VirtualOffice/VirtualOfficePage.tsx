@@ -1,21 +1,71 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
+import { OfficeAvatar } from '../../components/office/OfficeAvatar';
 import { OfficeControls } from '../../components/office/OfficeControls';
 import { OfficeSwitcher } from '../../components/office/OfficeSwitcher';
 import { officeRooms } from '../../constants/officeRooms';
 
 import type { OfficeRoomId } from '../../types/office';
 
+type CurrentUser = {
+    userId: number;
+    companyId: number;
+    displayName: string;
+    email: string;
+    role: 'owner' | 'admin' | 'member';
+};
+
+function getCurrentUser(): CurrentUser | null {
+    const storedCurrentUser =
+        sessionStorage.getItem('currentUser');
+
+    if (!storedCurrentUser) {
+        return null;
+    }
+
+    try {
+        const parsedCurrentUser =
+            JSON.parse(storedCurrentUser) as CurrentUser;
+
+        if (
+            !parsedCurrentUser.userId ||
+            !parsedCurrentUser.companyId ||
+            !parsedCurrentUser.displayName
+        ) {
+            return null;
+        }
+
+        return parsedCurrentUser;
+    } catch {
+        return null;
+    }
+}
+
 export function VirtualOfficePage() {
     const [selectedRoomId, setSelectedRoomId] =
         useState<OfficeRoomId>('main-office');
+
+    const [currentUser] =
+        useState<CurrentUser | null>(getCurrentUser);
+
+    if (!currentUser) {
+        return (
+            <Navigate
+                to="/register/company"
+                replace
+            />
+        );
+    }
 
     const selectedRoom = officeRooms.find(
         (room) => room.id === selectedRoomId,
     );
 
     if (!selectedRoom) {
-        throw new Error('選択されたオフィスが見つかりません。');
+        throw new Error(
+            '選択されたオフィスが見つかりません。',
+        );
     }
 
     return (
@@ -61,9 +111,9 @@ export function VirtualOfficePage() {
                     draggable={false}
                 />
 
-                <div className="virtual-office-page__avatar-layer">
-                    {/* 後ほどアバターを配置 */}
-                </div>
+                <OfficeAvatar
+                    displayName={currentUser.displayName}
+                />
             </section>
 
             <OfficeControls />

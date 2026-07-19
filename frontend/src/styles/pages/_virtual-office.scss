@@ -6,11 +6,11 @@
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     gap: 12px;
-    width: 100%;
+    width: calc(100% - 32px);
+    max-width: 1280px;
     min-height: 100vh;
+    margin: 0 auto;
     padding: 16px;
-    color: variables.$color-text-primary;
-    background: variables.$color-background;
 
     *,
     *::before,
@@ -107,6 +107,7 @@
     }
 
     @include mixins.mobile {
+        width: 100%;
         padding: 8px;
 
         &__header {

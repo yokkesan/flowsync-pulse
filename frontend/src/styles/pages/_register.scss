@@ -1,0 +1,169 @@
+@use '../foundation/variables' as variables;
+@use '../foundation/mixins' as mixins;
+
+.register-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 16px;
+    color: variables.$color-text-primary;
+    background: variables.$color-background;
+
+    &__card {
+        width: 100%;
+        max-width: 640px;
+        padding: 32px;
+        background: variables.$color-surface;
+        border: 1px solid variables.$color-border;
+        border-radius: 18px;
+        box-shadow: variables.$shadow-large;
+    }
+
+    &__header {
+        margin-bottom: 28px;
+    }
+
+    &__service-name {
+        margin: 0 0 6px;
+        color: variables.$color-primary;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.4;
+    }
+
+    &__description {
+        margin: 8px 0 0;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    @include mixins.mobile {
+        align-items: flex-start;
+        padding: 16px 8px;
+
+        &__card {
+            padding: 24px 16px;
+            border-radius: 14px;
+        }
+
+        &__title {
+            font-size: 24px;
+        }
+    }
+}
+
+.register-form {
+    display: grid;
+    gap: 20px;
+
+    &__field {
+        display: grid;
+        gap: 8px;
+    }
+
+    &__label {
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    &__input,
+    &__select {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 12px;
+        color: variables.$color-text-primary;
+        font: inherit;
+        font-size: 15px;
+        background: variables.$color-surface;
+        border: 1px solid variables.$color-border;
+        border-radius: 10px;
+        outline: none;
+        transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            background-color 160ms ease;
+
+        &:focus {
+            border-color: variables.$color-primary;
+            box-shadow: 0 0 0 3px rgb(49 87 200 / 14%);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            background: variables.$color-surface-muted;
+            opacity: 0.7;
+        }
+    }
+
+    &__select {
+        cursor: pointer;
+    }
+
+    &__message {
+        margin: 0;
+        padding: 12px 14px;
+        font-size: 14px;
+        line-height: 1.6;
+        border-radius: 10px;
+
+        &--error {
+            color: #b42318;
+            background: #fef3f2;
+            border: 1px solid #fecdca;
+        }
+
+        &--success {
+            color: #027a48;
+            background: #ecfdf3;
+            border: 1px solid #abefc6;
+        }
+    }
+
+    &__submit {
+        min-height: 48px;
+        padding: 0 20px;
+        color: #ffffff;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        background: variables.$color-primary;
+        border: 1px solid variables.$color-primary;
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+            background-color 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease;
+
+        &:hover:not(:disabled) {
+            background: variables.$color-primary-dark;
+            border-color: variables.$color-primary-dark;
+            box-shadow: 0 8px 18px rgb(49 87 200 / 22%);
+            transform: translateY(-1px);
+        }
+
+        &:focus-visible {
+            outline: 3px solid rgb(49 87 200 / 25%);
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        &--submitting {
+            transform: none;
+        }
+    }
+}

@@ -1,6 +1,19 @@
 package main
 
-import ( "database/sql" "fmt" "net/http" "os" "flowsync-pulse/backend/internal/user" "github.com/gin-gonic/gin" _ "github.com/go-sql-driver/mysql" )
+import (
+	"database/sql"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+
+	"flowsync-pulse/backend/internal/company"
+	"flowsync-pulse/backend/internal/user"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 func main() {
 	db, err := connectDB()
@@ -11,13 +24,52 @@ func main() {
 
 	router := gin.Default()
 
+	frontendOrigin := os.Getenv("FRONTEND_ORIGIN")
+	if frontendOrigin == "" {
+		frontendOrigin = "http://localhost:5174"
+	}
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			frontendOrigin,
+		},
+		AllowMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"Authorization",
+		},
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	companyRepository := company.NewRepository(db)
+	companyService := company.NewService(companyRepository)
+	companyHandler := company.NewHandler(companyService)
+
+	router.POST(
+		"/api/companies",
+		companyHandler.Create,
+	)
+
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 	userHandler := user.NewHandler(userService)
 
 	router.POST(
-		"/api/auth/register",
-		userHandler.RegisterCompanyOwner,
+		"/api/companies/:companyId/users",
+		userHandler.Register,
 	)
 
 	router.GET("/api/health", func(c *gin.Context) {
@@ -67,7 +119,7 @@ func connectDB() (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
