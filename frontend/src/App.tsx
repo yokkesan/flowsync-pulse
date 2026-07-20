@@ -4,6 +4,8 @@ import {
   Routes,
 } from 'react-router-dom';
 
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { LoginPage } from './pages/Login/LoginPage';
 import { CompanyRegisterPage } from './pages/Register/CompanyRegisterPage';
 import { UserRegisterPage } from './pages/Register/UserRegisterPage';
 import { VirtualOfficePage } from './pages/VirtualOffice/VirtualOfficePage';
@@ -13,7 +15,17 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={<Navigate to="/register/company" replace />}
+        element={
+          <Navigate
+            to="/register/company"
+            replace
+          />
+        }
+      />
+
+      <Route
+        path="/login"
+        element={<LoginPage />}
       />
 
       <Route
@@ -28,7 +40,21 @@ function App() {
 
       <Route
         path="/office"
-        element={<VirtualOfficePage />}
+        element={
+          <ProtectedRoute>
+            <VirtualOfficePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
     </Routes>
   );

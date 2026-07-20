@@ -1,6 +1,10 @@
 package auth
 
-import "github.com/gin-gonic/gin"
+import (
+	"flowsync-pulse/backend/internal/middleware"
+
+	"github.com/gin-gonic/gin"
+)
 
 func RegisterRoutes(
 	api *gin.RouterGroup,
@@ -11,5 +15,11 @@ func RegisterRoutes(
 	authGroup.POST(
 		"/login",
 		handler.Login,
+	)
+
+	api.GET(
+		"/me",
+		middleware.Authenticate(),
+		handler.CurrentUser,
 	)
 }

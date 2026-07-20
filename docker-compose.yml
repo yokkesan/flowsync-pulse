@@ -25,6 +25,7 @@ services:
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
       FRONTEND_ORIGIN: "http://localhost:${FRONTEND_PORT}"
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./backend:/app
     depends_on:

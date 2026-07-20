@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"flowsync-pulse/backend/internal/token"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,25 +22,25 @@ var (
 
 const accessTokenDuration = time.Hour
 
-type LoginUserFinder interface {
+type AuthRepository interface {
 	FindLoginUserByEmail(
 		ctx context.Context,
 		email string,
 	) (LoginUserRecord, error)
+
+	FindCurrentUser(
+		ctx context.Context,
+		userID uint64,
+		companyID uint64,
+	) (CurrentUserRecord, error)
 }
 
 type Service struct {
-	repository LoginUserFinder
+	repository AuthRepository
 	jwtSecret  []byte
 }
 
-type AccessTokenClaims struct {
-	CompanyID uint64 `json:"company_id"`
-	Role      string `json:"role"`
-	jwt.RegisteredClaims
-}
-
-func NewService(repository LoginUserFinder) *Service {
+func NewService(repository AuthRepository) *Service {
 	return &Service{
 		repository: repository,
 		jwtSecret:  []byte(os.Getenv("JWT_SECRET")),
@@ -94,6 +96,34 @@ func (s *Service) Login(
 	}, nil
 }
 
+func (s *Service) CurrentUser(
+	ctx context.Context,
+	userID uint64,
+	companyID uint64,
+) (CurrentUserResponse, error) {
+	record, err := s.repository.FindCurrentUser(
+		ctx,
+		userID,
+		companyID,
+	)
+	if err != nil {
+		return CurrentUserResponse{}, err
+	}
+
+	return CurrentUserResponse{
+		User: CurrentUserCompanyMember{
+			ID:          record.UserID,
+			DisplayName: record.DisplayName,
+			Email:       record.Email,
+			Role:        record.Role,
+		},
+		Company: CurrentUserCompany{
+			ID:   record.CompanyID,
+			Name: record.CompanyName,
+		},
+	}, nil
+}
+
 func (s *Service) generateAccessToken(
 	record LoginUserRecord,
 ) (string, int64, error) {
@@ -104,7 +134,7 @@ func (s *Service) generateAccessToken(
 	now := time.Now()
 	expiresAt := now.Add(accessTokenDuration)
 
-	claims := AccessTokenClaims{
+	claims := token.AccessTokenClaims{
 		CompanyID: record.CompanyID,
 		Role:      record.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -116,12 +146,12 @@ func (s *Service) generateAccessToken(
 		},
 	}
 
-	token := jwt.NewWithClaims(
+	jwtToken := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
 	)
 
-	signedToken, err := token.SignedString(s.jwtSecret)
+	signedToken, err := jwtToken.SignedString(s.jwtSecret)
 	if err != nil {
 		return "", 0, fmt.Errorf(
 			"failed to sign access token: %w",
