@@ -5,54 +5,31 @@ import { OfficeAvatar } from '../../components/office/OfficeAvatar';
 import { OfficeControls } from '../../components/office/OfficeControls';
 import { OfficeSwitcher } from '../../components/office/OfficeSwitcher';
 import { officeRooms } from '../../constants/officeRooms';
+import { useAuth } from '../../contexts/AuthContext';
 
 import type { OfficeRoomId } from '../../types/office';
 
-type CurrentUser = {
-    userId: number;
-    companyId: number;
-    displayName: string;
-    email: string;
-    role: 'owner' | 'admin' | 'member';
-};
-
-function getCurrentUser(): CurrentUser | null {
-    const storedCurrentUser =
-        sessionStorage.getItem('currentUser');
-
-    if (!storedCurrentUser) {
-        return null;
-    }
-
-    try {
-        const parsedCurrentUser =
-            JSON.parse(storedCurrentUser) as CurrentUser;
-
-        if (
-            !parsedCurrentUser.userId ||
-            !parsedCurrentUser.companyId ||
-            !parsedCurrentUser.displayName
-        ) {
-            return null;
-        }
-
-        return parsedCurrentUser;
-    } catch {
-        return null;
-    }
-}
-
 export function VirtualOfficePage() {
+    const { status, user } = useAuth();
+
     const [selectedRoomId, setSelectedRoomId] =
         useState<OfficeRoomId>('main-office');
 
-    const [currentUser] =
-        useState<CurrentUser | null>(getCurrentUser);
+    if (status === 'checking') {
+        return (
+            <div role="status">
+                ログイン状態を確認しています。
+            </div>
+        );
+    }
 
-    if (!currentUser) {
+    if (
+        status !== 'authenticated' ||
+        !user
+    ) {
         return (
             <Navigate
-                to="/register/company"
+                to="/login"
                 replace
             />
         );
@@ -112,7 +89,7 @@ export function VirtualOfficePage() {
                 />
 
                 <OfficeAvatar
-                    displayName={currentUser.displayName}
+                    displayName={user.display_name}
                 />
             </section>
 

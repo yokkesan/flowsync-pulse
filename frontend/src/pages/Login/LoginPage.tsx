@@ -7,11 +7,8 @@ import {
     useNavigate,
 } from 'react-router-dom';
 
-import {
-    ApiError,
-    login,
-} from '../../services/authApi';
-import { saveAccessToken } from '../../services/authStorage';
+import { useAuth } from '../../contexts/AuthContext';
+import { ApiError } from '../../services/authApi';
 
 type LocationState = {
     from?: string;
@@ -20,6 +17,8 @@ type LocationState = {
 export function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
+
+    const { login } = useAuth();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -39,12 +38,10 @@ export function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            const response = await login({
+            await login({
                 email,
                 password,
             });
-
-            saveAccessToken(response.access_token);
 
             const state =
                 location.state as LocationState | null;

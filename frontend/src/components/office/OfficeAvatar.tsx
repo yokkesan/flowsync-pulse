@@ -6,7 +6,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { removeAccessToken } from '../../services/authStorage';
+import { useAuth } from '../../contexts/AuthContext';
 
 type OfficeAvatarProps = {
     displayName: string;
@@ -41,6 +41,7 @@ export function OfficeAvatar({
     displayName,
 }: OfficeAvatarProps) {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const avatarLayerRef =
         useRef<HTMLDivElement | null>(null);
@@ -252,7 +253,7 @@ export function OfficeAvatar({
     };
 
     const handleLogout = () => {
-        removeAccessToken();
+        logout();
 
         navigate('/login', {
             replace: true,
