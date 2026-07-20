@@ -1,8 +1,12 @@
 import {
+    useEffect,
     useRef,
     useState,
-    type PointerEvent,
+    type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { removeAccessToken } from '../../services/authStorage';
 
 type OfficeAvatarProps = {
     displayName: string;
@@ -17,7 +21,11 @@ type DragState = {
     pointerId: number;
     offsetX: number;
     offsetY: number;
+    startClientX: number;
+    startClientY: number;
 };
+
+const DRAG_THRESHOLD_PX = 5;
 
 function getAvatarInitial(displayName: string): string {
     const normalizedDisplayName = displayName.trim();
@@ -32,8 +40,18 @@ function getAvatarInitial(displayName: string): string {
 export function OfficeAvatar({
     displayName,
 }: OfficeAvatarProps) {
+    const navigate = useNavigate();
+
     const avatarLayerRef =
         useRef<HTMLDivElement | null>(null);
+
+    const avatarRef =
+        useRef<HTMLDivElement | null>(null);
+
+    const menuRef =
+        useRef<HTMLDivElement | null>(null);
+
+    const hasDraggedRef = useRef(false);
 
     const [avatarPosition, setAvatarPosition] =
         useState<AvatarPosition>({
@@ -44,11 +62,69 @@ export function OfficeAvatar({
     const [dragState, setDragState] =
         useState<DragState | null>(null);
 
+    const [isMenuOpen, setIsMenuOpen] =
+        useState(false);
+
     const avatarInitial =
         getAvatarInitial(displayName);
 
+    useEffect(() => {
+        if (!isMenuOpen) {
+            return;
+        }
+
+        const handleDocumentPointerDown = (
+            event: PointerEvent,
+        ) => {
+            const target = event.target;
+
+            if (!(target instanceof Node)) {
+                return;
+            }
+
+            if (
+                avatarRef.current?.contains(target) ||
+                menuRef.current?.contains(target)
+            ) {
+                return;
+            }
+
+            setIsMenuOpen(false);
+        };
+
+        const handleDocumentKeyDown = (
+            event: KeyboardEvent,
+        ) => {
+            if (event.key === 'Escape') {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener(
+            'pointerdown',
+            handleDocumentPointerDown,
+        );
+
+        document.addEventListener(
+            'keydown',
+            handleDocumentKeyDown,
+        );
+
+        return () => {
+            document.removeEventListener(
+                'pointerdown',
+                handleDocumentPointerDown,
+            );
+
+            document.removeEventListener(
+                'keydown',
+                handleDocumentKeyDown,
+            );
+        };
+    }, [isMenuOpen]);
+
     const handlePointerDown = (
-        event: PointerEvent<HTMLDivElement>,
+        event: ReactPointerEvent<HTMLDivElement>,
     ) => {
         const avatarLayer = avatarLayerRef.current;
 
@@ -73,20 +149,44 @@ export function OfficeAvatar({
             event.pointerId,
         );
 
+        hasDraggedRef.current = false;
+        setIsMenuOpen(false);
+
         setDragState({
             pointerId: event.pointerId,
             offsetX: event.clientX - avatarX,
             offsetY: event.clientY - avatarY,
+            startClientX: event.clientX,
+            startClientY: event.clientY,
         });
     };
 
     const handlePointerMove = (
-        event: PointerEvent<HTMLDivElement>,
+        event: ReactPointerEvent<HTMLDivElement>,
     ) => {
         if (
             !dragState ||
             dragState.pointerId !== event.pointerId
         ) {
+            return;
+        }
+
+        const movedX = Math.abs(
+            event.clientX - dragState.startClientX,
+        );
+
+        const movedY = Math.abs(
+            event.clientY - dragState.startClientY,
+        );
+
+        if (
+            movedX >= DRAG_THRESHOLD_PX ||
+            movedY >= DRAG_THRESHOLD_PX
+        ) {
+            hasDraggedRef.current = true;
+        }
+
+        if (!hasDraggedRef.current) {
             return;
         }
 
@@ -120,7 +220,7 @@ export function OfficeAvatar({
     };
 
     const handlePointerUp = (
-        event: PointerEvent<HTMLDivElement>,
+        event: ReactPointerEvent<HTMLDivElement>,
     ) => {
         if (
             !dragState ||
@@ -139,7 +239,24 @@ export function OfficeAvatar({
             );
         }
 
+        const shouldOpenMenu =
+            !hasDraggedRef.current;
+
         setDragState(null);
+
+        if (shouldOpenMenu) {
+            setIsMenuOpen((currentValue) => {
+                return !currentValue;
+            });
+        }
+    };
+
+    const handleLogout = () => {
+        removeAccessToken();
+
+        navigate('/login', {
+            replace: true,
+        });
     };
 
     return (
@@ -148,10 +265,14 @@ export function OfficeAvatar({
             className="virtual-office-page__avatar-layer"
         >
             <div
+                ref={avatarRef}
                 className={[
                     'virtual-office-avatar',
                     dragState
                         ? 'virtual-office-avatar--dragging'
+                        : '',
+                    isMenuOpen
+                        ? 'virtual-office-avatar--menu-open'
                         : '',
                 ]
                     .filter(Boolean)
@@ -175,6 +296,31 @@ export function OfficeAvatar({
                 <p className="virtual-office-avatar__name">
                     {displayName}
                 </p>
+
+                {isMenuOpen && (
+                    <div
+                        ref={menuRef}
+                        className="virtual-office-avatar__menu"
+                        role="menu"
+                        aria-label={`${displayName}のユーザーメニュー`}
+                        onPointerDown={(event) => {
+                            event.stopPropagation();
+                        }}
+                    >
+                        <p className="virtual-office-avatar__menu-name">
+                            {displayName}
+                        </p>
+
+                        <button
+                            className="virtual-office-avatar__menu-button virtual-office-avatar__menu-button--logout"
+                            type="button"
+                            role="menuitem"
+                            onClick={handleLogout}
+                        >
+                            ログアウト
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
