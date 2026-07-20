@@ -7,7 +7,10 @@ import (
 	"fmt"
 )
 
-var ErrLoginUserNotFound = errors.New("login user not found")
+var (
+	ErrLoginUserNotFound   = errors.New("login user not found")
+	ErrCurrentUserNotFound = errors.New("current user not found")
+)
 
 type Repository struct {
 	db *sql.DB
@@ -21,6 +24,15 @@ type LoginUserRecord struct {
 	CompanyID    uint64
 	CompanyName  string
 	Role         string
+}
+
+type CurrentUserRecord struct {
+	UserID      uint64
+	DisplayName string
+	Email       string
+	CompanyID   uint64
+	CompanyName string
+	Role        string
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -74,6 +86,59 @@ func (r *Repository) FindLoginUserByEmail(
 
 		return LoginUserRecord{}, fmt.Errorf(
 			"failed to find login user: %w",
+			err,
+		)
+	}
+
+	return record, nil
+}
+
+func (r *Repository) FindCurrentUser(
+	ctx context.Context,
+	userID uint64,
+	companyID uint64,
+) (CurrentUserRecord, error) {
+	var record CurrentUserRecord
+
+	err := r.db.QueryRowContext(
+		ctx,
+		`
+			SELECT
+				u.id,
+				u.display_name,
+				u.email,
+				c.id,
+				c.name,
+				cm.role
+			FROM users AS u
+			INNER JOIN company_members AS cm
+				ON cm.user_id = u.id
+			INNER JOIN companies AS c
+				ON c.id = cm.company_id
+			WHERE u.id = ?
+			AND c.id = ?
+			AND u.status = 'active'
+			AND cm.status = 'active'
+			AND c.status = 'active'
+			LIMIT 1
+		`,
+		userID,
+		companyID,
+	).Scan(
+		&record.UserID,
+		&record.DisplayName,
+		&record.Email,
+		&record.CompanyID,
+		&record.CompanyName,
+		&record.Role,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return CurrentUserRecord{}, ErrCurrentUserNotFound
+		}
+
+		return CurrentUserRecord{}, fmt.Errorf(
+			"failed to find current user: %w",
 			err,
 		)
 	}
