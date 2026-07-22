@@ -4,21 +4,26 @@ CREATE TABLE tasks (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     project_id BIGINT UNSIGNED NOT NULL,
 
-    ticket_key VARCHAR(100) NOT NULL,
-    title VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT NULL,
 
+    assignee_user_id BIGINT UNSIGNED NOT NULL,
+
     status ENUM(
-        'todo',
+        'not_started',
         'in_progress',
-        'review',
         'completed',
-        'archived'
-    ) NOT NULL DEFAULT 'todo',
+        'suspended'
+    ) NOT NULL DEFAULT 'not_started',
 
-    assigned_user_id BIGINT UNSIGNED NULL,
+    priority ENUM(
+        'high',
+        'medium',
+        'low'
+    ) NOT NULL DEFAULT 'medium',
 
-    started_at DATETIME NULL,
+    start_date DATE NULL,
+    due_date DATE NULL,
     completed_at DATETIME NULL,
 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,14 +32,11 @@ CREATE TABLE tasks (
 
     PRIMARY KEY (id),
 
-    UNIQUE KEY uq_tasks_project_ticket_key (
-        project_id,
-        ticket_key
-    ),
-
     KEY idx_tasks_project_id (project_id),
-    KEY idx_tasks_assigned_user_id (assigned_user_id),
+    KEY idx_tasks_assignee_user_id (assignee_user_id),
     KEY idx_tasks_status (status),
+    KEY idx_tasks_priority (priority),
+    KEY idx_tasks_due_date (due_date),
 
     CONSTRAINT fk_tasks_project
         FOREIGN KEY (project_id)
@@ -42,21 +44,22 @@ CREATE TABLE tasks (
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
-    CONSTRAINT fk_tasks_assigned_user
-        FOREIGN KEY (assigned_user_id)
+    CONSTRAINT fk_tasks_assignee_user
+        FOREIGN KEY (assignee_user_id)
         REFERENCES users (id)
-        ON DELETE SET NULL
+        ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
     CONSTRAINT chk_tasks_dates
         CHECK (
-            completed_at IS NULL
-            OR started_at IS NULL
-            OR completed_at >= started_at
+            due_date IS NULL
+            OR start_date IS NULL
+            OR due_date >= start_date
         )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
 -- +goose Down
 
 DROP TABLE IF EXISTS tasks;

@@ -102,6 +102,88 @@ definitions:
       message:
         type: string
     type: object
+  task.CreateRequest:
+    properties:
+      assignee_user_id:
+        type: integer
+      branch_name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      description:
+        maxLength: 5000
+        type: string
+      due_date:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      priority:
+        enum:
+        - high
+        - medium
+        - low
+        type: string
+      start_date:
+        type: string
+      status:
+        enum:
+        - not_started
+        - in_progress
+        - completed
+        - suspended
+        type: string
+    required:
+    - assignee_user_id
+    - branch_name
+    - name
+    - priority
+    - status
+    type: object
+  task.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  task.ListResponse:
+    properties:
+      tasks:
+        items:
+          $ref: '#/definitions/task.Response'
+        type: array
+    type: object
+  task.Response:
+    properties:
+      assignee_name:
+        type: string
+      assignee_user_id:
+        type: integer
+      branch_name:
+        type: string
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      name:
+        type: string
+      priority:
+        type: string
+      project_id:
+        type: integer
+      start_date:
+        type: string
+      status:
+        type: string
+      task_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   user.ErrorResponse:
     properties:
       message:
@@ -303,6 +385,137 @@ paths:
       summary: ログインユーザー取得
       tags:
       - auth
+  /api/projects/{projectId}/tasks:
+    get:
+      description: 対象プロジェクトに登録されているタスク一覧を取得します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/task.ListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクトのタスク一覧取得
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: 対象プロジェクトに新しいタスクとブランチ情報を登録します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: タスク情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/task.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/task.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: タスク登録
+      tags:
+      - tasks
+  /api/projects/{projectId}/tasks/{taskId}:
+    get:
+      description: 対象プロジェクトに登録されているタスク詳細を取得します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: タスクID
+        in: path
+        name: taskId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/task.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: タスク詳細取得
+      tags:
+      - tasks
 schemes:
 - http
 securityDefinitions:
