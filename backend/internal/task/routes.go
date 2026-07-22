@@ -26,6 +26,16 @@ func RegisterRoutes(
 		handler.Get,
 	)
 
+	tasks.PUT(
+		"/:taskId",
+		handler.Update,
+	)
+
+	tasks.DELETE(
+		"/:taskId",
+		handler.Delete,
+	)
+
 	tasks.POST(
 		"",
 		handler.Create,

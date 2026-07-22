@@ -29,6 +29,20 @@ type CreateResult struct {
 	TaskID uint64
 }
 
+type UpdateParams struct {
+	ProjectID      uint64
+	TaskID         uint64
+	Name           string
+	Description    *string
+	AssigneeUserID uint64
+	BranchName     string
+	Status         string
+	Priority       string
+	StartDate      *string
+	DueDate        *string
+	CompletedAt    *time.Time
+}
+
 type FindByIDParams struct {
 	ProjectID uint64
 	TaskID    uint64
@@ -419,4 +433,144 @@ func (r *Repository) FindAllByProjectID(
 	}
 
 	return tasks, nil
+}
+
+func (r *Repository) Update(
+	ctx context.Context,
+	params UpdateParams,
+) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to begin task update transaction: %w",
+			err,
+		)
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	var exists bool
+
+	err = tx.QueryRowContext(
+		ctx,
+		`
+			SELECT EXISTS (
+				SELECT 1
+				FROM tasks
+				WHERE id = ?
+				  AND project_id = ?
+			)
+		`,
+		params.TaskID,
+		params.ProjectID,
+	).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to check task existence: %w",
+			err,
+		)
+	}
+
+	if !exists {
+		return ErrTaskNotFound
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`
+			UPDATE tasks
+			SET
+				name = ?,
+				description = ?,
+				assignee_user_id = ?,
+				status = ?,
+				priority = ?,
+				start_date = ?,
+				due_date = ?,
+				completed_at = ?
+			WHERE id = ?
+			  AND project_id = ?
+		`,
+		params.Name,
+		params.Description,
+		params.AssigneeUserID,
+		params.Status,
+		params.Priority,
+		params.StartDate,
+		params.DueDate,
+		params.CompletedAt,
+		params.TaskID,
+		params.ProjectID,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to update task: %w",
+			err,
+		)
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`
+			UPDATE task_branches
+			SET branch_name = ?
+			WHERE task_id = ?
+		`,
+		params.BranchName,
+		params.TaskID,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to update task branch: %w",
+			err,
+		)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf(
+			"failed to commit task update transaction: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (r *Repository) Delete(
+	ctx context.Context,
+	projectID uint64,
+	taskID uint64,
+) error {
+	result, err := r.db.ExecContext(
+		ctx,
+		`
+			DELETE FROM tasks
+			WHERE id = ?
+			  AND project_id = ?
+		`,
+		taskID,
+		projectID,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to delete task: %w",
+			err,
+		)
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get deleted task rows: %w",
+			err,
+		)
+	}
+
+	if affectedRows == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
 }
