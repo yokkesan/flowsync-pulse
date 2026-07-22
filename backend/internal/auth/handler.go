@@ -20,6 +20,18 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// Login godoc
+// @Summary ログイン
+// @Description メールアドレスとパスワードで認証し、アクセストークンとユーザー情報を返します。
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "ログイン情報"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/auth/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var request LoginRequest
 
@@ -68,6 +80,16 @@ func (h *Handler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// CurrentUser godoc
+// @Summary ログインユーザー取得
+// @Description アクセストークンから現在のログインユーザーと会社情報を取得します。
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} CurrentUserResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/me [get]
 func (h *Handler) CurrentUser(c *gin.Context) {
 	userIDValue, userIDExists := c.Get(
 		middleware.ContextUserIDKey,

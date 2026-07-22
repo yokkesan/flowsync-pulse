@@ -6,18 +6,26 @@ import (
 	"os"
 	"time"
 
+	_ "flowsync-pulse/backend/docs"
 	"flowsync-pulse/backend/internal/auth"
 	"flowsync-pulse/backend/internal/company"
 	"flowsync-pulse/backend/internal/user"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func New(db *sql.DB) *gin.Engine {
 	engine := gin.Default()
 
 	engine.Use(createCORSConfig())
+
+	engine.GET(
+		"/swagger/*any",
+		ginSwagger.WrapHandler(swaggerFiles.Handler),
+	)
 
 	api := engine.Group("/api")
 
@@ -104,7 +112,19 @@ func registerHealthRoute(
 	api *gin.RouterGroup,
 	db *sql.DB,
 ) {
-	api.GET("/health", func(c *gin.Context) {
+	api.GET("/health", healthCheckHandler(db))
+}
+
+// healthCheckHandler godoc
+// @Summary ヘルスチェック
+// @Description APIサーバーとデータベースの接続状態を返します。
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 503 {object} map[string]string
+// @Router /api/health [get]
+func healthCheckHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := db.Ping(); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
 				"status":   "error",
@@ -117,5 +137,5 @@ func registerHealthRoute(
 			"status":   "ok",
 			"database": "connected",
 		})
-	})
+	}
 }

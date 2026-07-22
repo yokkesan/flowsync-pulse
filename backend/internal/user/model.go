@@ -1,5 +1,9 @@
 package user
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
+
 type RegisterRequest struct {
 	DisplayName     string `json:"display_name" binding:"required,min=2,max=100"`
 	Email           string `json:"email" binding:"required,email,max=255"`

@@ -1,5 +1,15 @@
 package main
 
+// @title FlowSync Pulse API
+// @version 1.0
+// @description FlowSync Pulse バックエンドAPI仕様書
+// @host localhost:8081
+// @BasePath /
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 import (
 	"database/sql"
 	"fmt"

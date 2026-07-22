@@ -1,5 +1,9 @@
 package auth
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
+
 type LoginResponse struct {
 	AccessToken string       `json:"access_token"`
 	TokenType   string       `json:"token_type"`
