@@ -51,6 +51,17 @@ type TaskCreator interface {
 		params CreateParams,
 	) (CreateResult, error)
 
+	Update(
+		ctx context.Context,
+		params UpdateParams,
+	) error
+
+	Delete(
+		ctx context.Context,
+		projectID uint64,
+		taskID uint64,
+	) error
+
 	FindByID(
 		ctx context.Context,
 		params FindByIDParams,
@@ -240,6 +251,167 @@ func (s *Service) Get(
 	}
 
 	return response, nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	projectID uint64,
+	taskID uint64,
+	authUserID uint64,
+	companyID uint64,
+	request UpdateRequest,
+) (Response, error) {
+	hasAccess, err := s.repository.HasProjectAccess(
+		ctx,
+		projectID,
+		authUserID,
+		companyID,
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	if !hasAccess {
+		return Response{}, ErrProjectAccessDenied
+	}
+
+	currentTask, err := s.repository.FindByID(
+		ctx,
+		FindByIDParams{
+			ProjectID: projectID,
+			TaskID:    taskID,
+		},
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	isProjectMember, err := s.repository.IsActiveProjectMember(
+		ctx,
+		projectID,
+		request.AssigneeUserID,
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	if !isProjectMember {
+		return Response{}, ErrAssigneeNotProjectMember
+	}
+
+	name := strings.TrimSpace(request.Name)
+	branchName := strings.TrimSpace(request.BranchName)
+
+	branchExists, err := s.repository.BranchExistsInProject(
+		ctx,
+		projectID,
+		branchName,
+		taskID,
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	if branchExists {
+		return Response{}, ErrBranchAlreadyExists
+	}
+
+	if err := validateDateRange(
+		request.StartDate,
+		request.DueDate,
+	); err != nil {
+		return Response{}, err
+	}
+
+	description := trimOptionalString(
+		request.Description,
+	)
+
+	completedAt := currentTask.CompletedAt
+
+	if request.Status == StatusCompleted {
+		if completedAt == nil {
+			now := time.Now().UTC()
+			completedAt = &now
+		}
+	} else {
+		completedAt = nil
+	}
+
+	err = s.repository.Update(
+		ctx,
+		UpdateParams{
+			ProjectID:      projectID,
+			TaskID:         taskID,
+			Name:           name,
+			Description:    description,
+			AssigneeUserID: request.AssigneeUserID,
+			BranchName:     branchName,
+			Status:         request.Status,
+			Priority:       request.Priority,
+			StartDate:      request.StartDate,
+			DueDate:        request.DueDate,
+			CompletedAt:    completedAt,
+		},
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	response, err := s.repository.FindByID(
+		ctx,
+		FindByIDParams{
+			ProjectID: projectID,
+			TaskID:    taskID,
+		},
+	)
+	if err != nil {
+		return Response{}, err
+	}
+
+	return response, nil
+}
+
+func (s *Service) Delete(
+	ctx context.Context,
+	projectID uint64,
+	taskID uint64,
+	authUserID uint64,
+	companyID uint64,
+) error {
+	hasAccess, err := s.repository.HasProjectAccess(
+		ctx,
+		projectID,
+		authUserID,
+		companyID,
+	)
+	if err != nil {
+		return err
+	}
+
+	if !hasAccess {
+		return ErrProjectAccessDenied
+	}
+
+	if _, err := s.repository.FindByID(
+		ctx,
+		FindByIDParams{
+			ProjectID: projectID,
+			TaskID:    taskID,
+		},
+	); err != nil {
+		return err
+	}
+
+	if err := s.repository.Delete(
+		ctx,
+		projectID,
+		taskID,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func validateDateRange(

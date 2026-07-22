@@ -451,6 +451,159 @@
                         }
                     }
                 }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "対象プロジェクトに登録されているタスク情報とブランチ情報を編集します。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "タスク編集",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "プロジェクトID",
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "タスクID",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "タスク編集情報",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/task.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/task.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "対象プロジェクトに登録されているタスクを削除します。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "タスク削除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "プロジェクトID",
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "タスクID",
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/task.ErrorResponse"
+                        }
+                    }
+                }
             }
         }
     },
@@ -724,6 +877,58 @@
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "task.UpdateRequest": {
+            "type": "object",
+            "required": [
+                "assignee_user_id",
+                "branch_name",
+                "name",
+                "priority",
+                "status"
+            ],
+            "properties": {
+                "assignee_user_id": {
+                    "type": "integer"
+                },
+                "branch_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 5000
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                    ]
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "not_started",
+                        "in_progress",
+                        "completed",
+                        "suspended"
+                    ]
                 }
             }
         },

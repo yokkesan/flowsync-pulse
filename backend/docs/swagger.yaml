@@ -184,6 +184,45 @@ definitions:
       updated_at:
         type: string
     type: object
+  task.UpdateRequest:
+    properties:
+      assignee_user_id:
+        type: integer
+      branch_name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      description:
+        maxLength: 5000
+        type: string
+      due_date:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      priority:
+        enum:
+        - high
+        - medium
+        - low
+        type: string
+      start_date:
+        type: string
+      status:
+        enum:
+        - not_started
+        - in_progress
+        - completed
+        - suspended
+        type: string
+    required:
+    - assignee_user_id
+    - branch_name
+    - name
+    - priority
+    - status
+    type: object
   user.ErrorResponse:
     properties:
       message:
@@ -471,6 +510,49 @@ paths:
       tags:
       - tasks
   /api/projects/{projectId}/tasks/{taskId}:
+    delete:
+      description: 対象プロジェクトに登録されているタスクを削除します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: タスクID
+        in: path
+        name: taskId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: タスク削除
+      tags:
+      - tasks
     get:
       description: 対象プロジェクトに登録されているタスク詳細を取得します。
       parameters:
@@ -514,6 +596,63 @@ paths:
       security:
       - BearerAuth: []
       summary: タスク詳細取得
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: 対象プロジェクトに登録されているタスク情報とブランチ情報を編集します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: タスクID
+        in: path
+        name: taskId
+        required: true
+        type: integer
+      - description: タスク編集情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/task.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/task.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/task.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: タスク編集
       tags:
       - tasks
 schemes:
