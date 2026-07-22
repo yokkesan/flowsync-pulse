@@ -102,6 +102,128 @@ definitions:
       message:
         type: string
     type: object
+  project.CreateRequest:
+    properties:
+      description:
+        maxLength: 5000
+        type: string
+      end_date:
+        type: string
+      member_ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      name:
+        maxLength: 150
+        minLength: 2
+        type: string
+      slug:
+        maxLength: 100
+        minLength: 2
+        type: string
+      start_date:
+        type: string
+      status:
+        enum:
+        - planned
+        - active
+        - completed
+        - archived
+        type: string
+    required:
+    - member_ids
+    - name
+    - slug
+    - status
+    type: object
+  project.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  project.ListResponse:
+    properties:
+      projects:
+        items:
+          $ref: '#/definitions/project.Response'
+        type: array
+    type: object
+  project.MemberResponse:
+    properties:
+      display_name:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  project.Response:
+    properties:
+      company_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      members:
+        items:
+          $ref: '#/definitions/project.MemberResponse'
+        type: array
+      name:
+        type: string
+      project_id:
+        type: integer
+      slug:
+        type: string
+      start_date:
+        type: string
+      status:
+        type: string
+      task_count:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  project.UpdateRequest:
+    properties:
+      description:
+        maxLength: 5000
+        type: string
+      end_date:
+        type: string
+      member_ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      name:
+        maxLength: 150
+        minLength: 2
+        type: string
+      slug:
+        maxLength: 100
+        minLength: 2
+        type: string
+      start_date:
+        type: string
+      status:
+        enum:
+        - planned
+        - active
+        - completed
+        - archived
+        type: string
+    required:
+    - member_ids
+    - name
+    - slug
+    - status
+    type: object
   task.CreateRequest:
     properties:
       assignee_user_id:
@@ -424,6 +546,199 @@ paths:
       summary: ログインユーザー取得
       tags:
       - auth
+  /api/projects:
+    get:
+      description: ログインユーザーが所属しているプロジェクト一覧を取得します。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/project.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクト一覧取得
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      description: ログインユーザーの会社に新しいプロジェクトを登録します。
+      parameters:
+      - description: プロジェクト情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/project.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/project.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクト登録
+      tags:
+      - projects
+  /api/projects/{projectId}:
+    delete:
+      description: ログインユーザーが所属しているプロジェクトを削除します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクト削除
+      tags:
+      - projects
+    get:
+      description: ログインユーザーが所属しているプロジェクトの詳細を取得します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/project.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクト詳細取得
+      tags:
+      - projects
+    put:
+      consumes:
+      - application/json
+      description: ログインユーザーが所属しているプロジェクトを編集します。
+      parameters:
+      - description: プロジェクトID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: プロジェクト編集情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/project.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/project.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/project.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロジェクト編集
+      tags:
+      - projects
   /api/projects/{projectId}/tasks:
     get:
       description: 対象プロジェクトに登録されているタスク一覧を取得します。
