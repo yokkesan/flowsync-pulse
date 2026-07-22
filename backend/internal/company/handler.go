@@ -19,6 +19,18 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// Create godoc
+// @Summary 会社登録
+// @Description 会社名と会社スラッグを指定して、新しい会社を登録します。
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "会社情報"
+// @Success 201 {object} CreateResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/companies [post]
 func (h *Handler) Create(c *gin.Context) {
 	var request CreateRequest
 

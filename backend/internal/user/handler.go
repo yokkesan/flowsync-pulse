@@ -20,6 +20,20 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// Register godoc
+// @Summary ユーザー登録
+// @Description 指定した会社に所属するユーザーを登録します。
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param companyId path int true "会社ID"
+// @Param request body RegisterRequest true "ユーザー情報"
+// @Success 201 {object} RegisterResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/companies/{companyId}/users [post]
 func (h *Handler) Register(c *gin.Context) {
 	companyID, err := strconv.ParseUint(
 		c.Param("companyId"),
