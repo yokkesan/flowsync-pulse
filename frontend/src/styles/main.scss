@@ -2,12 +2,22 @@
 @use './foundation/mixins';
 
 @use './pages/virtual-office';
-@use './components/office/office-avatar';
 @use './pages/register';
 @use './pages/login';
+@use './pages/project-list';
 
+@use './components/office/office-avatar';
 @use './components/office/office-switcher';
 @use './components/office/office-controls';
+
+@use './components/layout/app-header';
+@use './components/layout/app-sidebar';
+
+@use './components/projects/project-filters';
+@use './components/projects/project-table';
+@use './components/projects/project-status-badge';
+@use './components/projects/project-member-avatars';
+@use './components/projects/project-pagination';
 
 html {
     font-family:

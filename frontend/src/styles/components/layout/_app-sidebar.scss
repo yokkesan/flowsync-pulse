@@ -1,0 +1,176 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.app-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    height: 100vh;
+    padding: 24px 16px 20px;
+    background: variables.$color-surface;
+    border-right: 1px solid variables.$color-border;
+
+    &__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 0 8px;
+    }
+
+    &__brand-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 800;
+        background: variables.$color-primary;
+        border-radius: 10px;
+    }
+
+    &__brand-name {
+        color: variables.$color-text-primary;
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+
+    &__navigation {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 32px;
+    }
+
+    &__navigation-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 44px;
+        padding: 0 12px;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        border-radius: 8px;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover {
+            color: variables.$color-primary;
+            background: variables.$color-primary-soft;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &--active {
+            color: variables.$color-primary;
+            background: variables.$color-primary-soft;
+        }
+
+        &--disabled {
+            color: #a7afbf;
+            cursor: not-allowed;
+
+            &:hover {
+                color: #a7afbf;
+                background: transparent;
+            }
+        }
+    }
+
+    &__navigation-icon {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        font-size: 18px;
+    }
+
+    &__user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: auto;
+        padding: 16px 8px 0;
+        border-top: 1px solid variables.$color-border;
+    }
+
+    &__user-avatar {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        color: variables.$color-primary;
+        font-size: 14px;
+        font-weight: 800;
+        background: variables.$color-primary-soft;
+        border: 1px solid variables.$color-primary-border;
+        border-radius: 50%;
+    }
+
+    &__user-information {
+        min-width: 0;
+    }
+
+    &__user-name,
+    &__user-role {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__user-name {
+        margin: 0;
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    &__user-role {
+        margin: 2px 0 0;
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+    }
+
+    @include mixins.mobile {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 12px 16px;
+        border-right: 0;
+        border-bottom: 1px solid variables.$color-border;
+
+        &__brand {
+            padding: 0;
+        }
+
+        &__navigation {
+            flex-direction: row;
+            gap: 8px;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+
+        &__navigation-link {
+            flex-shrink: 0;
+            min-height: 40px;
+        }
+
+        &__user {
+            display: none;
+        }
+    }
+}

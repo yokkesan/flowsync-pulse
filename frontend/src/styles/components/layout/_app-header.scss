@@ -1,0 +1,105 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+    padding: 0 32px;
+    background: variables.$color-surface;
+    border-bottom: 1px solid variables.$color-border;
+
+    &__page-selector {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 12px;
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        font-weight: 700;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover {
+            color: variables.$color-primary;
+            background: variables.$color-primary-soft;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    &__icon-button,
+    &__profile-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        color: variables.$color-text-secondary;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover {
+            color: variables.$color-primary;
+            background: variables.$color-primary-soft;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+    }
+
+    &__icon-button {
+        width: 40px;
+        font-size: 18px;
+    }
+
+    &__profile-button {
+        gap: 8px;
+        padding: 0 8px;
+    }
+
+    &__profile-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        color: variables.$color-primary;
+        font-size: 14px;
+        font-weight: 800;
+        background: variables.$color-primary-soft;
+        border: 1px solid variables.$color-primary-border;
+        border-radius: 50%;
+    }
+
+    @include mixins.mobile {
+        min-height: 56px;
+        padding: 0 16px;
+
+        &__page-selector {
+            padding: 0 8px;
+        }
+    }
+}
