@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"flowsync-pulse/backend/internal/middleware"
 	"log"
 	"net/http"
 	"strconv"
@@ -99,4 +100,46 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+// List godoc
+// @Summary 会社所属ユーザー一覧取得
+// @Description ログインユーザーと同じ会社に所属する有効ユーザーを取得します。
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} ListResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/users [get]
+func (h *Handler) List(c *gin.Context) {
+	companyID := c.GetUint64(
+		middleware.ContextCompanyIDKey,
+	)
+
+	if companyID == 0 {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Message: "ログイン情報が無効です。",
+		})
+		return
+	}
+
+	response, err := h.service.ListByCompanyID(
+		c.Request.Context(),
+		companyID,
+	)
+	if err != nil {
+		log.Printf(
+			"failed to list company users: company_id=%d error=%v",
+			companyID,
+			err,
+		)
+
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: "所属ユーザー一覧の取得に失敗しました。",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }

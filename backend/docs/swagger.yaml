@@ -350,6 +350,26 @@ definitions:
       message:
         type: string
     type: object
+  user.ListMemberResponse:
+    properties:
+      display_name:
+        type: string
+      email:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  user.ListResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/user.ListMemberResponse'
+        type: array
+    type: object
   user.RegisterRequest:
     properties:
       display_name:
@@ -970,6 +990,29 @@ paths:
       summary: タスク編集
       tags:
       - tasks
+  /api/users:
+    get:
+      description: ログインユーザーと同じ会社に所属する有効ユーザーを取得します。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/user.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/user.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 会社所属ユーザー一覧取得
+      tags:
+      - users
 schemes:
 - http
 securityDefinitions:

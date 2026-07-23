@@ -18,6 +18,8 @@
 @use './components/projects/project-status-badge';
 @use './components/projects/project-member-avatars';
 @use './components/projects/project-pagination';
+@use './components/projects/project-form';
+@use './pages/project-detail';
 
 html {
     font-family:

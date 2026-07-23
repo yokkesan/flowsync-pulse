@@ -95,10 +95,7 @@ func registerUserRoutes(
 	service := user.NewService(repository)
 	handler := user.NewHandler(service)
 
-	api.POST(
-		"/companies/:companyId/users",
-		handler.Register,
-	)
+	user.RegisterRoutes(api, handler)
 }
 
 func registerAuthRoutes(

@@ -10,6 +10,9 @@ import { CompanyRegisterPage } from './pages/Register/CompanyRegisterPage';
 import { UserRegisterPage } from './pages/Register/UserRegisterPage';
 import { VirtualOfficePage } from './pages/VirtualOffice/VirtualOfficePage';
 import { ProjectListPage } from './pages/Projects/ProjectListPage';
+import { ProjectCreatePage } from './pages/Projects/ProjectCreatePage';
+import { ProjectDetailPage } from './pages/Projects/ProjectDetailPage';
+import { ProjectEditPage } from './pages/Projects/ProjectEditPage';
 
 function App() {
   return (
@@ -53,6 +56,33 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/new"
+        element={
+          <ProtectedRoute>
+            <ProjectCreatePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId"
+        element={
+          <ProtectedRoute>
+            <ProjectDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId/edit"
+        element={
+          <ProtectedRoute>
+            <ProjectEditPage />
           </ProtectedRoute>
         }
       />

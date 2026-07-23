@@ -1,0 +1,305 @@
+@use '../foundation/variables' as variables;
+@use '../foundation/mixins' as mixins;
+
+.project-detail-page {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: 100vh;
+    color: variables.$color-text-primary;
+    background: variables.$color-background;
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+    }
+
+    &__body {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+    }
+
+    &__main {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px;
+    }
+
+    &__back {
+        margin-bottom: 20px;
+    }
+
+    &__back-button {
+        padding: 0;
+        color: variables.$color-primary;
+        font-size: 14px;
+        font-weight: 700;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: variables.$color-primary-dark;
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 3px;
+            border-radius: 2px;
+        }
+    }
+
+    &__heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    &__title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.4;
+    }
+
+    &__slug {
+        margin: 6px 0 0;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+    }
+
+    &__actions {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 10px;
+    }
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        min-height: 42px;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease,
+            border-color 0.2s ease;
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        &--secondary {
+            color: variables.$color-text-primary;
+            background: variables.$color-surface;
+            border: 1px solid variables.$color-border;
+
+            &:hover:not(:disabled) {
+                color: variables.$color-primary;
+                background: variables.$color-primary-soft;
+                border-color: variables.$color-primary-border;
+            }
+        }
+
+        &--danger {
+            color: #b42318;
+            background: #fff6f5;
+            border: 1px solid #fecdca;
+
+            &:hover:not(:disabled) {
+                color: #912018;
+                background: #fee4e2;
+                border-color: #fda29b;
+            }
+        }
+    }
+
+    &__card {
+        padding: 24px;
+        background: variables.$color-surface;
+        border: 1px solid variables.$color-border;
+        border-radius: 12px;
+        box-shadow: variables.$shadow-surface;
+    }
+
+    &__card-title {
+        margin: 0 0 20px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    &__definition-list {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+    }
+
+    &__definition-item {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 20px;
+        padding: 16px 0;
+        border-bottom: 1px solid variables.$color-border;
+
+        &:first-child {
+            padding-top: 0;
+        }
+
+        &:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        dt {
+            color: variables.$color-text-secondary;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        dd {
+            margin: 0;
+            color: variables.$color-text-primary;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+    }
+
+    &__member-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 20px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__member {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 44px;
+        padding: 10px 12px;
+        background: variables.$color-surface-muted;
+        border: 1px solid variables.$color-border;
+        border-radius: 8px;
+    }
+
+    &__member-name {
+        min-width: 0;
+        overflow: hidden;
+        color: variables.$color-text-primary;
+        font-size: 13px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__member-role {
+        flex-shrink: 0;
+        padding: 4px 8px;
+        color: variables.$color-primary;
+        font-size: 11px;
+        font-weight: 700;
+        background: variables.$color-primary-soft;
+        border: 1px solid variables.$color-primary-border;
+        border-radius: 999px;
+    }
+
+    &__state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 240px;
+        padding: 32px;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        text-align: center;
+        background: variables.$color-surface;
+        border: 1px solid variables.$color-border;
+        border-radius: 12px;
+        box-shadow: variables.$shadow-surface;
+
+        &--error {
+            color: #b42318;
+            background: #fff6f5;
+            border-color: #fecdca;
+        }
+    }
+
+    &__delete-error {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+        color: #b42318;
+        font-size: 14px;
+        line-height: 1.6;
+        background: #fff6f5;
+        border: 1px solid #fecdca;
+        border-radius: 8px;
+    }
+
+    @include mixins.mobile {
+        display: block;
+
+        &__body {
+            display: block;
+        }
+
+        &__main {
+            padding: 20px 16px;
+        }
+
+        &__heading {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        &__title {
+            font-size: 24px;
+        }
+
+        &__actions {
+            width: 100%;
+        }
+
+        &__button {
+            flex: 1;
+        }
+
+        &__content {
+            grid-template-columns: 1fr;
+        }
+
+        &__definition-item {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+    }
+}
