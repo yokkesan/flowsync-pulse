@@ -1,0 +1,30 @@
+.task-priority-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    &--high {
+        color: #b42318;
+        background: #fef3f2;
+        border-color: #fecdca;
+    }
+
+    &--medium {
+        color: #b54708;
+        background: #fffaeb;
+        border-color: #fedf89;
+    }
+
+    &--low {
+        color: #067647;
+        background: #ecfdf3;
+        border-color: #abefc6;
+    }
+}

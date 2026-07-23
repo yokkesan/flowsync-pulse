@@ -1,0 +1,36 @@
+.task-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    &--not_started {
+        color: #667085;
+        background: #f2f4f7;
+        border-color: #d0d5dd;
+    }
+
+    &--in_progress {
+        color: #175cd3;
+        background: #eff8ff;
+        border-color: #b2ddff;
+    }
+
+    &--completed {
+        color: #067647;
+        background: #ecfdf3;
+        border-color: #abefc6;
+    }
+
+    &--suspended {
+        color: #b54708;
+        background: #fffaeb;
+        border-color: #fedf89;
+    }
+}

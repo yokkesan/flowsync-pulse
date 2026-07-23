@@ -251,6 +251,30 @@ export function ProjectDetailPage() {
                                 </div>
                             </header>
 
+                                        <nav
+                                            className="project-detail-page__tabs"
+                                            aria-label="プロジェクト詳細メニュー"
+                                        >
+                                            <button
+                                                className="project-detail-page__tab project-detail-page__tab--active"
+                                                type="button"
+                                            >
+                                                概要
+                                            </button>
+
+                                            <button
+                                                className="project-detail-page__tab"
+                                                type="button"
+                                                onClick={() => {
+                                                    navigate(
+                                                        `/projects/${project.project_id}/tasks`,
+                                                    );
+                                                }}
+                                            >
+                                                タスク
+                                            </button>
+                                        </nav>
+
                             {deleteErrorMessage && (
                                 <div
                                     className="project-detail-page__delete-error"
