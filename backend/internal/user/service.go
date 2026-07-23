@@ -12,18 +12,23 @@ var ErrPasswordMismatch = errors.New(
 	"password confirmation does not match",
 )
 
-type UserRegistrar interface {
+type UserRepository interface {
 	Register(
 		ctx context.Context,
 		params RegisterParams,
 	) (RegisterResult, error)
+
+	ListByCompanyID(
+		ctx context.Context,
+		companyID uint64,
+	) ([]ListMemberResult, error)
 }
 
 type Service struct {
-	repository UserRegistrar
+	repository UserRepository
 }
 
-func NewService(repository UserRegistrar) *Service {
+func NewService(repository UserRepository) *Service {
 	return &Service{
 		repository: repository,
 	}
@@ -73,5 +78,41 @@ func (s *Service) Register(
 		DisplayName: displayName,
 		Email:       email,
 		Role:        "owner",
+	}, nil
+}
+
+func (s *Service) ListByCompanyID(
+	ctx context.Context,
+	companyID uint64,
+) (ListResponse, error) {
+	members, err := s.repository.ListByCompanyID(
+		ctx,
+		companyID,
+	)
+	if err != nil {
+		return ListResponse{}, err
+	}
+
+	users := make(
+		[]ListMemberResponse,
+		0,
+		len(members),
+	)
+
+	for _, member := range members {
+		users = append(
+			users,
+			ListMemberResponse{
+				UserID:      member.UserID,
+				DisplayName: member.DisplayName,
+				Email:       member.Email,
+				Role:        member.Role,
+				Status:      member.Status,
+			},
+		)
+	}
+
+	return ListResponse{
+		Users: users,
 	}, nil
 }

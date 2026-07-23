@@ -18,3 +18,15 @@ type RegisterResponse struct {
 	Email       string `json:"email"`
 	Role        string `json:"role"`
 }
+
+type ListMemberResponse struct {
+	UserID      uint64 `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
+	Status      string `json:"status"`
+}
+
+type ListResponse struct {
+	Users []ListMemberResponse `json:"users"`
+}

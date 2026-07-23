@@ -1,0 +1,317 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.project-form {
+    overflow: hidden;
+    background: variables.$color-surface;
+    border: 1px solid variables.$color-border;
+    border-radius: 12px;
+    box-shadow: variables.$shadow-surface;
+
+    &__message {
+        margin: 20px 20px 0;
+        padding: 12px 14px;
+        font-size: 14px;
+        line-height: 1.6;
+        border-radius: 8px;
+
+        &--error {
+            color: #b42318;
+            background: #fff6f5;
+            border: 1px solid #fecdca;
+        }
+    }
+
+    &__body {
+        display: grid;
+        grid-template-columns:
+            minmax(0, 1.4fr)
+            minmax(280px, 0.8fr);
+        gap: 32px;
+        padding: 24px;
+    }
+
+    &__fields {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__label {
+        color: variables.$color-text-primary;
+        font-size: 13px;
+        font-weight: 700;
+
+        span {
+            margin-left: 4px;
+            color: #d92d20;
+        }
+    }
+
+    &__input,
+    &__select,
+    &__textarea {
+        width: 100%;
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        background: variables.$color-surface;
+        border: 1px solid variables.$color-border;
+        border-radius: 8px;
+        outline: none;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+
+        &:hover {
+            border-color: variables.$color-primary-border;
+        }
+
+        &:focus {
+            border-color: variables.$color-primary;
+            box-shadow:
+                0 0 0 3px
+                variables.$color-primary-border;
+        }
+
+        &:disabled {
+            background: variables.$color-surface-muted;
+            cursor: not-allowed;
+        }
+    }
+
+    &__input,
+    &__select {
+        min-height: 44px;
+        padding: 0 12px;
+    }
+
+    &__select {
+        cursor: pointer;
+    }
+
+    &__textarea {
+        min-height: 128px;
+        padding: 12px;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+    &__help {
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    &__date-fields {
+        display: grid;
+        grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+        );
+        gap: 16px;
+    }
+
+    &__members {
+        min-width: 0;
+        padding-left: 32px;
+        border-left: 1px solid variables.$color-border;
+    }
+
+    &__members-title {
+        margin: 0 0 16px;
+        color: variables.$color-text-primary;
+        font-size: 15px;
+        line-height: 1.5;
+
+        span {
+            margin-left: 4px;
+            color: #d92d20;
+        }
+    }
+
+    &__members-state {
+        margin: 0;
+        padding: 16px;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+        line-height: 1.6;
+        text-align: center;
+        background: variables.$color-surface-muted;
+        border: 1px solid variables.$color-border;
+        border-radius: 8px;
+
+        &--error {
+            color: #b42318;
+            background: #fff6f5;
+            border-color: #fecdca;
+        }
+    }
+
+    &__member-list {
+        display: flex;
+        flex-direction: column;
+        max-height: 420px;
+        overflow-y: auto;
+        border: 1px solid variables.$color-border;
+        border-radius: 8px;
+    }
+
+    &__member {
+        display: grid;
+        grid-template-columns:
+            auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 64px;
+        padding: 12px 14px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        &:not(:last-child) {
+            border-bottom: 1px solid variables.$color-border;
+        }
+
+        &:hover {
+            background: variables.$color-primary-soft;
+        }
+
+        input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: variables.$color-primary;
+            cursor: pointer;
+        }
+    }
+
+    &__member-information {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__member-name,
+    &__member-email {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__member-name {
+        color: variables.$color-text-primary;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    &__member-email {
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+    }
+
+    &__member-role {
+        padding: 4px 8px;
+        color: variables.$color-primary;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        background: variables.$color-primary-soft;
+        border: 1px solid variables.$color-primary-border;
+        border-radius: 999px;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        min-height: 72px;
+        padding: 14px 24px;
+        background: variables.$color-surface-muted;
+        border-top: 1px solid variables.$color-border;
+    }
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 112px;
+        min-height: 42px;
+        padding: 0 18px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        &--secondary {
+            color: variables.$color-text-primary;
+            background: variables.$color-surface;
+            border: 1px solid variables.$color-border;
+
+            &:hover:not(:disabled) {
+                background: variables.$color-primary-soft;
+                border-color: variables.$color-primary-border;
+            }
+        }
+
+        &--primary {
+            color: #ffffff;
+            background: variables.$color-primary;
+            border: 1px solid variables.$color-primary;
+
+            &:hover:not(:disabled) {
+                background: variables.$color-primary-dark;
+                border-color: variables.$color-primary-dark;
+            }
+        }
+    }
+
+    @include mixins.mobile {
+        &__body {
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: 20px 16px;
+        }
+
+        &__date-fields {
+            grid-template-columns: 1fr;
+        }
+
+        &__members {
+            padding-left: 0;
+            border-left: 0;
+            border-top: 1px solid variables.$color-border;
+            padding-top: 24px;
+        }
+
+        &__actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+            padding: 16px;
+        }
+
+        &__button {
+            width: 100%;
+        }
+    }
+}

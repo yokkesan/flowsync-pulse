@@ -30,6 +30,14 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
+type ListMemberResult struct {
+	UserID      uint64
+	DisplayName string
+	Email       string
+	Role        string
+	Status      string
+}
+
 func (r *Repository) Register(
 	ctx context.Context,
 	params RegisterParams,
@@ -135,4 +143,72 @@ func (r *Repository) Register(
 	return RegisterResult{
 		UserID: uint64(userID),
 	}, nil
+}
+
+func (r *Repository) ListByCompanyID(
+	ctx context.Context,
+	companyID uint64,
+) ([]ListMemberResult, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		`
+			SELECT
+				u.id,
+				u.display_name,
+				u.email,
+				cm.role,
+				cm.status
+			FROM company_members AS cm
+			INNER JOIN users AS u
+				ON u.id = cm.user_id
+			WHERE cm.company_id = ?
+			  AND cm.status = 'active'
+			  AND u.status = 'active'
+			ORDER BY u.display_name ASC, u.id ASC
+		`,
+		companyID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to list company users: %w",
+			err,
+		)
+	}
+	defer rows.Close()
+
+	members := make(
+		[]ListMemberResult,
+		0,
+	)
+
+	for rows.Next() {
+		var member ListMemberResult
+
+		if err := rows.Scan(
+			&member.UserID,
+			&member.DisplayName,
+			&member.Email,
+			&member.Role,
+			&member.Status,
+		); err != nil {
+			return nil, fmt.Errorf(
+				"failed to scan company user: %w",
+				err,
+			)
+		}
+
+		members = append(
+			members,
+			member,
+		)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf(
+			"failed to iterate company users: %w",
+			err,
+		)
+	}
+
+	return members, nil
 }

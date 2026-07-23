@@ -10,6 +10,7 @@ import { CompanyRegisterPage } from './pages/Register/CompanyRegisterPage';
 import { UserRegisterPage } from './pages/Register/UserRegisterPage';
 import { VirtualOfficePage } from './pages/VirtualOffice/VirtualOfficePage';
 import { ProjectListPage } from './pages/Projects/ProjectListPage';
+import { ProjectCreatePage } from './pages/Projects/ProjectCreatePage';
 
 function App() {
   return (
@@ -53,6 +54,15 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/new"
+        element={
+          <ProtectedRoute>
+            <ProjectCreatePage />
           </ProtectedRoute>
         }
       />
