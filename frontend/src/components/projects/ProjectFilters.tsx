@@ -61,6 +61,10 @@ export function ProjectFilters({
                         すべて
                     </option>
 
+                    <option value="planned">
+                        計画中
+                    </option>
+
                     <option value="active">
                         進行中
                     </option>
@@ -69,8 +73,8 @@ export function ProjectFilters({
                         完了
                     </option>
 
-                    <option value="paused">
-                        停止中
+                    <option value="archived">
+                        アーカイブ
                     </option>
                 </select>
             </label>

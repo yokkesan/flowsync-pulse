@@ -47,15 +47,9 @@ export function ProjectListPage() {
                 .toLowerCase();
 
         return projects.filter((project) => {
-            const normalizedStatus =
-                project.status === 'stopped'
-                    ? 'paused'
-                    : project.status;
-
             const matchesStatus =
                 statusFilter === 'all' ||
-                normalizedStatus ===
-                    statusFilter;
+                project.status === statusFilter;
 
             if (!normalizedKeyword) {
                 return matchesStatus;
@@ -64,7 +58,7 @@ export function ProjectListPage() {
             const matchesKeyword = [
                 project.name,
                 project.slug,
-                project.description,
+                project.description ?? '',
             ].some((value) =>
                 value
                     .toLowerCase()
