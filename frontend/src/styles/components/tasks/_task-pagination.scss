@@ -1,0 +1,71 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.task-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border-top: 1px solid variables.$color-border;
+
+    &__summary {
+        margin: 0;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+    }
+
+    &__controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    &__button {
+        min-height: 36px;
+        padding: 0 14px;
+        color: variables.$color-text-primary;
+        font-size: 13px;
+        font-weight: 600;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 6px;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            color: variables.$color-primary;
+            border-color: variables.$color-primary;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            color: variables.$color-text-secondary;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    }
+
+    &__current {
+        min-width: 52px;
+        font-size: 13px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    @include mixins.mobile {
+        flex-direction: column;
+        align-items: stretch;
+
+        &__summary {
+            text-align: center;
+        }
+
+        &__controls {
+            justify-content: center;
+        }
+    }
+}

@@ -5,6 +5,8 @@
 @use './pages/register';
 @use './pages/login';
 @use './pages/project-list';
+@use './pages/project-detail';
+@use './pages/task-list';
 
 @use './components/office/office-avatar';
 @use './components/office/office-switcher';
@@ -19,7 +21,12 @@
 @use './components/projects/project-member-avatars';
 @use './components/projects/project-pagination';
 @use './components/projects/project-form';
-@use './pages/project-detail';
+
+@use './components/tasks/task-filters';
+@use './components/tasks/task-table';
+@use './components/tasks/task-status-badge';
+@use './components/tasks/task-priority-badge';
+@use './components/tasks/task-pagination';
 
 html {
     font-family:

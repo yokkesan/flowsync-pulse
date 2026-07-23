@@ -13,6 +13,7 @@ import { ProjectListPage } from './pages/Projects/ProjectListPage';
 import { ProjectCreatePage } from './pages/Projects/ProjectCreatePage';
 import { ProjectDetailPage } from './pages/Projects/ProjectDetailPage';
 import { ProjectEditPage } from './pages/Projects/ProjectEditPage';
+import { TaskListPage } from './pages/Tasks/TaskListPage';
 
 function App() {
   return (
@@ -83,6 +84,15 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectEditPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId/tasks"
+        element={
+          <ProtectedRoute>
+            <TaskListPage />
           </ProtectedRoute>
         }
       />

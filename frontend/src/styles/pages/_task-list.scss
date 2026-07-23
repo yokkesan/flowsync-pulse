@@ -1,0 +1,204 @@
+@use '../foundation/variables' as variables;
+@use '../foundation/mixins' as mixins;
+
+.task-list-page {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: 100vh;
+    background: variables.$color-background;
+    color: variables.$color-text-primary;
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+    }
+
+    &__body {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+    }
+
+    &__main {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px;
+    }
+
+    &__back {
+        margin-bottom: 20px;
+    }
+
+    &__back-button {
+        padding: 0;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: variables.$color-primary;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 3px;
+        }
+    }
+
+    &__heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    &__heading-text {
+        min-width: 0;
+    }
+
+    &__eyebrow {
+        margin: 0 0 4px;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    &__create-button {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        background: variables.$color-primary;
+        border: 1px solid variables.$color-primary;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
+
+        &:hover {
+            background: variables.$color-primary-dark;
+            border-color: variables.$color-primary-dark;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:active {
+            transform: translateY(1px);
+        }
+    }
+
+    &__tabs {
+        display: flex;
+        gap: 28px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid variables.$color-border;
+    }
+
+    &__tab {
+        position: relative;
+        padding: 12px 4px;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        font-weight: 700;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: variables.$color-text-primary;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &--active {
+            color: variables.$color-primary;
+            cursor: default;
+
+            &::after {
+                position: absolute;
+                right: 0;
+                bottom: -1px;
+                left: 0;
+                height: 2px;
+                background: variables.$color-primary;
+                content: '';
+            }
+        }
+    }
+
+    &__table-card {
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 10px;
+    }
+
+        &__state {
+            padding: 40px 24px;
+            color: variables.$color-text-secondary;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid variables.$color-border;
+            border-radius: 10px;
+    
+            &--error {
+                color: #b42318;
+            }
+        }
+
+    @include mixins.mobile {
+        display: block;
+
+        &__body {
+            display: block;
+        }
+
+        &__main {
+            padding: 20px 16px;
+        }
+
+        &__heading {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        &__title {
+            font-size: 24px;
+        }
+
+        &__create-button {
+            width: 100%;
+        }
+
+        &__tabs {
+            overflow-x: auto;
+        }
+    }
+}
