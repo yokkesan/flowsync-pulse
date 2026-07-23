@@ -1,0 +1,47 @@
+@use '../../foundation/variables' as variables;
+
+.project-member-avatars {
+    display: flex;
+    align-items: center;
+
+    &__list {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    &__avatar,
+    &__remaining {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        font-weight: 800;
+        border-radius: 50%;
+    }
+
+    &__avatar {
+        color: variables.$color-primary;
+        background: variables.$color-primary-soft;
+        border: 2px solid variables.$color-surface;
+
+        &:not(:first-child) {
+            margin-left: -8px;
+        }
+    }
+
+    &__remaining {
+        margin-left: -8px;
+        color: variables.$color-text-secondary;
+        background: variables.$color-surface-muted;
+        border: 2px solid variables.$color-surface;
+    }
+
+    &__empty {
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+    }
+}

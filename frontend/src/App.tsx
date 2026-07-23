@@ -9,6 +9,7 @@ import { LoginPage } from './pages/Login/LoginPage';
 import { CompanyRegisterPage } from './pages/Register/CompanyRegisterPage';
 import { UserRegisterPage } from './pages/Register/UserRegisterPage';
 import { VirtualOfficePage } from './pages/VirtualOffice/VirtualOfficePage';
+import { ProjectListPage } from './pages/Projects/ProjectListPage';
 
 function App() {
   return (
@@ -43,6 +44,15 @@ function App() {
         element={
           <ProtectedRoute>
             <VirtualOfficePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects"
+        element={
+          <ProtectedRoute>
+            <ProjectListPage />
           </ProtectedRoute>
         }
       />

@@ -1,0 +1,206 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.project-table {
+    overflow: hidden;
+    background: variables.$color-surface;
+    border: 1px solid variables.$color-border;
+    border-radius: 10px;
+    box-shadow: variables.$shadow-surface;
+
+    &__wrapper {
+        overflow-x: auto;
+    }
+
+    &__table {
+        width: 100%;
+        min-width: 920px;
+        border-collapse: collapse;
+        table-layout: fixed;
+
+        th,
+        td {
+            padding: 16px 20px;
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px solid variables.$color-border;
+        }
+
+        th {
+            color: variables.$color-text-secondary;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: variables.$color-surface-muted;
+        }
+
+        td {
+            color: variables.$color-text-primary;
+            font-size: 14px;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 30%;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 14%;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 14%;
+        }
+
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 10%;
+        }
+
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 22%;
+        }
+
+        th:nth-child(6),
+        td:nth-child(6) {
+            width: 10%;
+            text-align: center;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+    }
+
+    &__row {
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background: variables.$color-primary-soft;
+        }
+    }
+
+    &__project-cell {
+        min-width: 0;
+    }
+
+    &__project-link {
+        display: inline;
+        max-width: 100%;
+        padding: 0;
+        overflow: hidden;
+        color: variables.$color-primary;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: variables.$color-primary-dark;
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 3px;
+            border-radius: 2px;
+        }
+    }
+
+    &__project-description {
+        display: -webkit-box;
+        margin: 4px 0 0;
+        overflow: hidden;
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+        line-height: 1.5;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    &__task-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        color: variables.$color-text-primary;
+        font-size: 13px;
+        font-weight: 700;
+        background: variables.$color-surface-muted;
+        border: 1px solid variables.$color-border;
+        border-radius: 999px;
+    }
+
+    &__menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover {
+            color: variables.$color-primary;
+            background: variables.$color-primary-soft;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+    }
+
+    &__state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 220px;
+        padding: 32px;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        text-align: center;
+
+        &--error {
+            color: #b42318;
+            background: #fff6f5;
+        }
+    }
+
+    &__empty-cell {
+        height: 180px;
+        color: variables.$color-text-secondary;
+        text-align: center !important;
+    }
+
+    @include mixins.mobile {
+        border-radius: 8px;
+
+        &__table {
+            min-width: 840px;
+
+            th,
+            td {
+                padding: 14px 16px;
+            }
+        }
+    }
+}
