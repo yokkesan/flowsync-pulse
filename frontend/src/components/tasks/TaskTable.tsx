@@ -44,6 +44,10 @@ export function TaskTable({
                     <thead>
                         <tr>
                             <th scope="col">
+                                プロジェクト
+                            </th>
+
+                            <th scope="col">
                                 タスク
                             </th>
 
@@ -74,7 +78,7 @@ export function TaskTable({
                             <tr>
                                 <td
                                     className="task-table__empty"
-                                    colSpan={6}
+                                    colSpan={7}
                                 >
                                     条件に一致するタスクはありません。
                                 </td>
@@ -97,6 +101,14 @@ export function TaskTable({
                                         );
                                     }}
                                 >
+                                    <td>
+                                        <span className="task-table__project-name">
+                                            {
+                                                task.project_name
+                                            }
+                                        </span>
+                                    </td>
+
                                     <td>
                                         <div className="task-table__task">
                                             <strong className="task-table__task-name">

@@ -12,6 +12,7 @@ export type TaskPriority =
 export type Task = {
     task_id: number;
     project_id: number;
+    project_name: string;
     name: string;
     description: string | null;
     assignee_user_id: number;

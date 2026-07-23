@@ -7,6 +7,7 @@
 @use './pages/project-list';
 @use './pages/project-detail';
 @use './pages/task-list';
+@use './pages/task-detail';
 
 @use './components/office/office-avatar';
 @use './components/office/office-switcher';
@@ -27,6 +28,7 @@
 @use './components/tasks/task-status-badge';
 @use './components/tasks/task-priority-badge';
 @use './components/tasks/task-pagination';
+@use './components/tasks/task-form';
 
 html {
     font-family:

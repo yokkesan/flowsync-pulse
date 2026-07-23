@@ -75,12 +75,9 @@ function validateTaskId(
 
 export async function getTasks(
     accessToken: string,
-    projectId: number,
 ): Promise<TaskListResponse> {
-    validateProjectId(projectId);
-
     const response = await fetch(
-        `${API_BASE_URL}/projects/${projectId}/tasks`,
+        `${API_BASE_URL}/tasks`,
         {
             method: 'GET',
             headers:

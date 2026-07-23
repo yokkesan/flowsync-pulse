@@ -150,6 +150,13 @@
                 content: '';
             }
         }
+
+        &__description {
+            margin: 6px 0 0;
+            color: variables.$color-text-secondary;
+            font-size: 14px;
+            line-height: 1.7;
+        }
     }
 
     &__table-card {

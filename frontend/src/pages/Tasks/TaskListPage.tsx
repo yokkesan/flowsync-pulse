@@ -5,7 +5,6 @@ import {
 import {
     Navigate,
     useNavigate,
-    useParams,
 } from 'react-router-dom';
 
 import { AppHeader } from '../../components/layout/AppHeader';
@@ -18,52 +17,21 @@ import {
 import { TaskPagination } from '../../components/tasks/TaskPagination';
 import { TaskTable } from '../../components/tasks/TaskTable';
 import { useAuth } from '../../contexts/AuthContext';
-import { useProject } from '../../hooks/useProject';
 import { useTasks } from '../../hooks/useTasks';
+import type { ProjectMember } from '../../types/project';
 
 const TASKS_PER_PAGE = 10;
-
-function parseProjectId(
-    value: string | undefined,
-): number | null {
-    if (!value) {
-        return null;
-    }
-
-    const projectId = Number(value);
-
-    if (
-        !Number.isSafeInteger(projectId) ||
-        projectId <= 0
-    ) {
-        return null;
-    }
-
-    return projectId;
-}
 
 export function TaskListPage() {
     const navigate = useNavigate();
 
-    const { projectId: projectIdParam } =
-        useParams();
-
     const { status, user } = useAuth();
-
-    const projectId =
-        parseProjectId(projectIdParam);
-
-    const {
-        project,
-        isLoading: isProjectLoading,
-        errorMessage: projectErrorMessage,
-    } = useProject(projectId ?? 0);
 
     const {
         tasks,
-        isLoading: isTasksLoading,
-        errorMessage: tasksErrorMessage,
-    } = useTasks(projectId ?? 0);
+        isLoading,
+        errorMessage,
+    } = useTasks();
 
     const [
         searchKeyword,
@@ -90,6 +58,47 @@ export function TaskListPage() {
         setCurrentPage,
     ] = useState(1);
 
+    const assignees = useMemo<ProjectMember[]>(
+        () => {
+            const assigneeMap = new Map<
+                number,
+                ProjectMember
+            >();
+
+            tasks.forEach((task) => {
+                if (
+                    assigneeMap.has(
+                        task.assignee_user_id,
+                    )
+                ) {
+                    return;
+                }
+
+                assigneeMap.set(
+                    task.assignee_user_id,
+                    {
+                        user_id:
+                            task.assignee_user_id,
+                        display_name:
+                            task.assignee_name,
+                        role: '',
+                        status: 'active',
+                    },
+                );
+            });
+
+            return Array.from(
+                assigneeMap.values(),
+            ).sort((first, second) =>
+                first.display_name.localeCompare(
+                    second.display_name,
+                    'ja',
+                ),
+            );
+        },
+        [tasks],
+    );
+
     const filteredTasks = useMemo(() => {
         const normalizedKeyword =
             searchKeyword
@@ -100,6 +109,11 @@ export function TaskListPage() {
             const matchesKeyword =
                 normalizedKeyword === '' ||
                 task.name
+                    .toLowerCase()
+                    .includes(
+                        normalizedKeyword,
+                    ) ||
+                task.project_name
                     .toLowerCase()
                     .includes(
                         normalizedKeyword,
@@ -203,12 +217,17 @@ export function TaskListPage() {
     function handleSelectTask(
         taskId: number,
     ): void {
-        if (!projectId) {
+        const selectedTask = tasks.find(
+            (task) =>
+                task.task_id === taskId,
+        );
+
+        if (!selectedTask) {
             return;
         }
 
         navigate(
-            `/projects/${projectId}/tasks/${taskId}`,
+            `/projects/${selectedTask.project_id}/tasks/${selectedTask.task_id}`,
         );
     }
 
@@ -232,23 +251,6 @@ export function TaskListPage() {
         );
     }
 
-    if (!projectId) {
-        return (
-            <Navigate
-                to="/projects"
-                replace
-            />
-        );
-    }
-
-    const isLoading =
-        isProjectLoading ||
-        isTasksLoading;
-
-    const errorMessage =
-        projectErrorMessage ||
-        tasksErrorMessage;
-
     return (
         <div className="task-list-page">
             <AppSidebar
@@ -267,19 +269,17 @@ export function TaskListPage() {
                 />
 
                 <main className="task-list-page__main">
-                    <div className="task-list-page__back">
-                        <button
-                            className="task-list-page__back-button"
-                            type="button"
-                            onClick={() => {
-                                navigate(
-                                    `/projects/${projectId}`,
-                                );
-                            }}
-                        >
-                            ← プロジェクト詳細へ
-                        </button>
-                    </div>
+                    <header className="task-list-page__heading">
+                        <div className="task-list-page__heading-text">
+                            <h1 className="task-list-page__title">
+                                タスク一覧
+                            </h1>
+
+                            <p className="task-list-page__description">
+                                所属プロジェクトのタスクを確認できます。
+                            </p>
+                        </div>
+                    </header>
 
                     {isLoading ? (
                         <section
@@ -295,61 +295,8 @@ export function TaskListPage() {
                         >
                             {errorMessage}
                         </section>
-                    ) : !project ? (
-                        <section className="task-list-page__state">
-                            プロジェクトが見つかりません。
-                        </section>
                     ) : (
                         <>
-                            <header className="task-list-page__heading">
-                                <div className="task-list-page__heading-text">
-                                    <p className="task-list-page__eyebrow">
-                                        プロジェクト
-                                    </p>
-
-                                    <h1 className="task-list-page__title">
-                                        {project.name}
-                                    </h1>
-                                </div>
-
-                                <button
-                                    className="task-list-page__create-button"
-                                    type="button"
-                                    onClick={() => {
-                                        navigate(
-                                            `/projects/${projectId}/tasks/new`,
-                                        );
-                                    }}
-                                >
-                                    ＋ タスクを追加
-                                </button>
-                            </header>
-
-                            <nav
-                                className="task-list-page__tabs"
-                                aria-label="プロジェクト詳細メニュー"
-                            >
-                                <button
-                                    className="task-list-page__tab"
-                                    type="button"
-                                    onClick={() => {
-                                        navigate(
-                                            `/projects/${projectId}`,
-                                        );
-                                    }}
-                                >
-                                    概要
-                                </button>
-
-                                <button
-                                    className="task-list-page__tab task-list-page__tab--active"
-                                    type="button"
-                                    aria-current="page"
-                                >
-                                    タスク
-                                </button>
-                            </nav>
-
                             <TaskFilters
                                 searchKeyword={
                                     searchKeyword
@@ -364,7 +311,7 @@ export function TaskListPage() {
                                     priorityFilter
                                 }
                                 members={
-                                    project.members
+                                    assignees
                                 }
                                 onSearchKeywordChange={
                                     handleSearchKeywordChange

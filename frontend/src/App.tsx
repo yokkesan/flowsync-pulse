@@ -13,7 +13,11 @@ import { ProjectListPage } from './pages/Projects/ProjectListPage';
 import { ProjectCreatePage } from './pages/Projects/ProjectCreatePage';
 import { ProjectDetailPage } from './pages/Projects/ProjectDetailPage';
 import { ProjectEditPage } from './pages/Projects/ProjectEditPage';
+
 import { TaskListPage } from './pages/Tasks/TaskListPage';
+import { TaskCreatePage } from './pages/Tasks/TaskCreatePage';
+import { TaskDetailPage } from './pages/Tasks/TaskDetailPage';
+import { TaskEditPage } from './pages/Tasks/TaskEditPage';
 
 function App() {
   return (
@@ -93,6 +97,42 @@ function App() {
         element={
           <ProtectedRoute>
             <TaskListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tasks"
+        element={
+          <ProtectedRoute>
+            <TaskListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId/tasks/new"
+        element={
+          <ProtectedRoute>
+            <TaskCreatePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId/tasks/:taskId"
+        element={
+          <ProtectedRoute>
+            <TaskDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:projectId/tasks/:taskId/edit"
+        element={
+          <ProtectedRoute>
+            <TaskEditPage />
           </ProtectedRoute>
         }
       />

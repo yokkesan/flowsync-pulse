@@ -1,0 +1,172 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.task-form {
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid variables.$color-border;
+    border-radius: 10px;
+
+    &__message {
+        padding: 14px 18px;
+        font-size: 14px;
+        border-bottom: 1px solid variables.$color-border;
+
+        &--error {
+            color: #b42318;
+            background: #fef3f2;
+        }
+    }
+
+    &__fields {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+        padding: 28px;
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__label {
+        color: variables.$color-text-primary;
+        font-size: 14px;
+        font-weight: 700;
+
+        span {
+            margin-left: 4px;
+            color: #b42318;
+        }
+    }
+
+    &__input,
+    &__select,
+    &__textarea {
+        width: 100%;
+        color: variables.$color-text-primary;
+        font: inherit;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 8px;
+
+        &:focus {
+            border-color: variables.$color-primary;
+            outline: 3px solid variables.$color-primary-border;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    }
+
+    &__input,
+    &__select {
+        min-height: 44px;
+        padding: 0 12px;
+    }
+
+    &__textarea {
+        min-height: 140px;
+        padding: 12px;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+    &__select {
+        cursor: pointer;
+    }
+
+    &__select-fields,
+    &__date-fields {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 20px 28px;
+        background: variables.$color-background;
+        border-top: 1px solid variables.$color-border;
+    }
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        &--primary {
+            color: #ffffff;
+            background: variables.$color-primary;
+            border: 1px solid variables.$color-primary;
+
+            &:hover:not(:disabled) {
+                background: variables.$color-primary-dark;
+                border-color: variables.$color-primary-dark;
+            }
+        }
+
+        &--secondary {
+            color: variables.$color-text-primary;
+            background: #ffffff;
+            border: 1px solid variables.$color-border;
+
+            &:hover:not(:disabled) {
+                color: variables.$color-primary;
+                border-color: variables.$color-primary;
+            }
+        }
+    }
+
+    @include mixins.mobile {
+        &__fields {
+            padding: 20px 16px;
+        }
+
+        &__select-fields,
+        &__date-fields {
+            grid-template-columns: 1fr;
+        }
+
+        &__actions {
+            flex-direction: column-reverse;
+            padding: 16px;
+        }
+
+        &__button {
+            width: 100%;
+        }
+    }
+}
