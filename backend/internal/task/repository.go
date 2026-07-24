@@ -261,6 +261,7 @@ func (r *Repository) FindByID(
 			SELECT
 				t.id,
 				t.project_id,
+				p.name,
 				t.name,
 				t.description,
 				t.assignee_user_id,
@@ -274,6 +275,8 @@ func (r *Repository) FindByID(
 				t.created_at,
 				t.updated_at
 			FROM tasks t
+			INNER JOIN projects p
+				ON p.id = t.project_id
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
 			INNER JOIN task_branches tb
@@ -286,6 +289,7 @@ func (r *Repository) FindByID(
 	).Scan(
 		&response.TaskID,
 		&response.ProjectID,
+		&response.ProjectName,
 		&response.Name,
 		&description,
 		&response.AssigneeUserID,
@@ -310,23 +314,13 @@ func (r *Repository) FindByID(
 		)
 	}
 
-	if description.Valid {
-		response.Description = &description.String
-	}
-
-	if startDate.Valid {
-		value := startDate.Time.Format(time.DateOnly)
-		response.StartDate = &value
-	}
-
-	if dueDate.Valid {
-		value := dueDate.Time.Format(time.DateOnly)
-		response.DueDate = &value
-	}
-
-	if completedAt.Valid {
-		response.CompletedAt = &completedAt.Time
-	}
+	setNullableTaskFields(
+		&response,
+		description,
+		startDate,
+		dueDate,
+		completedAt,
+	)
 
 	return response, nil
 }
@@ -341,6 +335,7 @@ func (r *Repository) FindAllByProjectID(
 			SELECT
 				t.id,
 				t.project_id,
+				p.name,
 				t.name,
 				t.description,
 				t.assignee_user_id,
@@ -354,6 +349,8 @@ func (r *Repository) FindAllByProjectID(
 				t.created_at,
 				t.updated_at
 			FROM tasks t
+			INNER JOIN projects p
+				ON p.id = t.project_id
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
 			INNER JOIN task_branches tb
@@ -376,50 +373,9 @@ func (r *Repository) FindAllByProjectID(
 	tasks := make([]Response, 0)
 
 	for rows.Next() {
-		var response Response
-		var description sql.NullString
-		var startDate sql.NullTime
-		var dueDate sql.NullTime
-		var completedAt sql.NullTime
-
-		if err := rows.Scan(
-			&response.TaskID,
-			&response.ProjectID,
-			&response.Name,
-			&description,
-			&response.AssigneeUserID,
-			&response.AssigneeName,
-			&response.BranchName,
-			&response.Status,
-			&response.Priority,
-			&startDate,
-			&dueDate,
-			&completedAt,
-			&response.CreatedAt,
-			&response.UpdatedAt,
-		); err != nil {
-			return nil, fmt.Errorf(
-				"failed to scan task: %w",
-				err,
-			)
-		}
-
-		if description.Valid {
-			response.Description = &description.String
-		}
-
-		if startDate.Valid {
-			value := startDate.Time.Format(time.DateOnly)
-			response.StartDate = &value
-		}
-
-		if dueDate.Valid {
-			value := dueDate.Time.Format(time.DateOnly)
-			response.DueDate = &value
-		}
-
-		if completedAt.Valid {
-			response.CompletedAt = &completedAt.Time
+		response, err := scanTaskResponse(rows)
+		if err != nil {
+			return nil, err
 		}
 
 		tasks = append(tasks, response)
@@ -428,6 +384,78 @@ func (r *Repository) FindAllByProjectID(
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to iterate tasks: %w",
+			err,
+		)
+	}
+
+	return tasks, nil
+}
+
+func (r *Repository) FindAllAccessible(
+	ctx context.Context,
+	userID uint64,
+	companyID uint64,
+) ([]Response, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		`
+			SELECT
+				t.id,
+				t.project_id,
+				p.name,
+				t.name,
+				t.description,
+				t.assignee_user_id,
+				u.display_name,
+				tb.branch_name,
+				t.status,
+				t.priority,
+				t.start_date,
+				t.due_date,
+				t.completed_at,
+				t.created_at,
+				t.updated_at
+			FROM tasks t
+			INNER JOIN projects p
+				ON p.id = t.project_id
+			INNER JOIN project_members pm
+				ON pm.project_id = p.id
+			   AND pm.user_id = ?
+			   AND pm.status = 'active'
+			INNER JOIN users u
+				ON u.id = t.assignee_user_id
+			INNER JOIN task_branches tb
+				ON tb.task_id = t.id
+			WHERE p.company_id = ?
+			ORDER BY
+				t.created_at DESC,
+				t.id DESC
+		`,
+		userID,
+		companyID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to find accessible tasks: %w",
+			err,
+		)
+	}
+	defer rows.Close()
+
+	tasks := make([]Response, 0)
+
+	for rows.Next() {
+		response, err := scanTaskResponse(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, response)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf(
+			"failed to iterate accessible tasks: %w",
 			err,
 		)
 	}
@@ -573,4 +601,83 @@ func (r *Repository) Delete(
 	}
 
 	return nil
+}
+
+type taskScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanTaskResponse(
+	scanner taskScanner,
+) (Response, error) {
+	var response Response
+	var description sql.NullString
+	var startDate sql.NullTime
+	var dueDate sql.NullTime
+	var completedAt sql.NullTime
+
+	if err := scanner.Scan(
+		&response.TaskID,
+		&response.ProjectID,
+		&response.ProjectName,
+		&response.Name,
+		&description,
+		&response.AssigneeUserID,
+		&response.AssigneeName,
+		&response.BranchName,
+		&response.Status,
+		&response.Priority,
+		&startDate,
+		&dueDate,
+		&completedAt,
+		&response.CreatedAt,
+		&response.UpdatedAt,
+	); err != nil {
+		return Response{}, fmt.Errorf(
+			"failed to scan task: %w",
+			err,
+		)
+	}
+
+	setNullableTaskFields(
+		&response,
+		description,
+		startDate,
+		dueDate,
+		completedAt,
+	)
+
+	return response, nil
+}
+
+func setNullableTaskFields(
+	response *Response,
+	description sql.NullString,
+	startDate sql.NullTime,
+	dueDate sql.NullTime,
+	completedAt sql.NullTime,
+) {
+	if description.Valid {
+		response.Description =
+			&description.String
+	}
+
+	if startDate.Valid {
+		value := startDate.Time.Format(
+			time.DateOnly,
+		)
+		response.StartDate = &value
+	}
+
+	if dueDate.Valid {
+		value := dueDate.Time.Format(
+			time.DateOnly,
+		)
+		response.DueDate = &value
+	}
+
+	if completedAt.Valid {
+		response.CompletedAt =
+			&completedAt.Time
+	}
 }

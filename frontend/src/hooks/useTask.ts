@@ -5,18 +5,21 @@ import {
 
 import { ApiError } from '../services/authApi';
 import { getAccessToken } from '../services/authStorage';
-import { getTasks } from '../services/taskApi';
+import { getTask } from '../services/taskApi';
 import type { Task } from '../types/task';
 
-type UseTasksResult = {
-    tasks: Task[];
+type UseTaskResult = {
+    task: Task | null;
     isLoading: boolean;
     errorMessage: string;
 };
 
-export function useTasks(): UseTasksResult {
-    const [tasks, setTasks] =
-        useState<Task[]>([]);
+export function useTask(
+    projectId: number,
+    taskId: number,
+): UseTaskResult {
+    const [task, setTask] =
+        useState<Task | null>(null);
 
     const [isLoading, setIsLoading] =
         useState(true);
@@ -29,14 +32,31 @@ export function useTasks(): UseTasksResult {
     useEffect(() => {
         let isMounted = true;
 
-        async function loadTasks():
+        async function loadTask():
         Promise<void> {
+            if (
+                !Number.isSafeInteger(projectId) ||
+                projectId <= 0 ||
+                !Number.isSafeInteger(taskId) ||
+                taskId <= 0
+            ) {
+                if (isMounted) {
+                    setTask(null);
+                    setErrorMessage(
+                        'プロジェクトIDまたはタスクIDが正しくありません。',
+                    );
+                    setIsLoading(false);
+                }
+
+                return;
+            }
+
             const accessToken =
                 getAccessToken();
 
             if (!accessToken) {
                 if (isMounted) {
-                    setTasks([]);
+                    setTask(null);
                     setErrorMessage(
                         'ログイン情報が見つかりません。',
                     );
@@ -52,22 +72,23 @@ export function useTasks(): UseTasksResult {
             }
 
             try {
-                const response =
-                    await getTasks(
-                        accessToken,
-                    );
+                const response = await getTask(
+                    accessToken,
+                    projectId,
+                    taskId,
+                );
 
                 if (!isMounted) {
                     return;
                 }
 
-                setTasks(response.tasks);
+                setTask(response);
             } catch (error) {
                 if (!isMounted) {
                     return;
                 }
 
-                setTasks([]);
+                setTask(null);
 
                 if (error instanceof ApiError) {
                     setErrorMessage(
@@ -77,7 +98,7 @@ export function useTasks(): UseTasksResult {
                 }
 
                 setErrorMessage(
-                    'タスク一覧の取得中に予期しないエラーが発生しました。',
+                    'タスク詳細の取得中に予期しないエラーが発生しました。',
                 );
             } finally {
                 if (isMounted) {
@@ -86,15 +107,18 @@ export function useTasks(): UseTasksResult {
             }
         }
 
-        void loadTasks();
+        void loadTask();
 
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [
+        projectId,
+        taskId,
+    ]);
 
     return {
-        tasks,
+        task,
         isLoading,
         errorMessage,
     };

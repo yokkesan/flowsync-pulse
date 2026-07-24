@@ -38,6 +38,19 @@ function getRoleLabel(
     }
 }
 
+function getNavigationLinkClassName(
+    isActive: boolean,
+): string {
+    return [
+        'app-sidebar__navigation-link',
+        isActive
+            ? 'app-sidebar__navigation-link--active'
+            : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
+}
+
 export function AppSidebar({
     displayName,
     role,
@@ -65,15 +78,12 @@ export function AppSidebar({
                 aria-label="メインナビゲーション"
             >
                 <NavLink
-                    className={({ isActive }) =>
-                        [
-                            'app-sidebar__navigation-link',
-                            isActive
-                                ? 'app-sidebar__navigation-link--active'
-                                : '',
-                        ]
-                            .filter(Boolean)
-                            .join(' ')
+                    className={({
+                        isActive,
+                    }) =>
+                        getNavigationLinkClassName(
+                            isActive,
+                        )
                     }
                     to="/office"
                 >
@@ -88,15 +98,12 @@ export function AppSidebar({
                 </NavLink>
 
                 <NavLink
-                    className={({ isActive }) =>
-                        [
-                            'app-sidebar__navigation-link',
-                            isActive
-                                ? 'app-sidebar__navigation-link--active'
-                                : '',
-                        ]
-                            .filter(Boolean)
-                            .join(' ')
+                    className={({
+                        isActive,
+                    }) =>
+                        getNavigationLinkClassName(
+                            isActive,
+                        )
                     }
                     to="/projects"
                 >
@@ -112,12 +119,18 @@ export function AppSidebar({
                     </span>
                 </NavLink>
 
-                <span
-                    className={[
-                        'app-sidebar__navigation-link',
-                        'app-sidebar__navigation-link--disabled',
-                    ].join(' ')}
-                    aria-disabled="true"
+                <NavLink
+                    className={({ isActive }) =>
+                        [
+                            'app-sidebar__navigation-link',
+                            isActive
+                                ? 'app-sidebar__navigation-link--active'
+                                : '',
+                        ]
+                            .filter(Boolean)
+                            .join(' ')
+                    }
+                    to="/tasks"
                 >
                     <span
                         className="app-sidebar__navigation-icon"
@@ -127,7 +140,7 @@ export function AppSidebar({
                     </span>
 
                     <span>タスク</span>
-                </span>
+                </NavLink>
             </nav>
 
             <div className="app-sidebar__user">

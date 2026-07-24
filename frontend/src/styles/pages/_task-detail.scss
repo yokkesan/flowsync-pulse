@@ -1,0 +1,245 @@
+@use '../foundation/variables' as variables;
+@use '../foundation/mixins' as mixins;
+
+.task-detail-page {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: 100vh;
+    color: variables.$color-text-primary;
+    background: variables.$color-background;
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+    }
+
+    &__body {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+    }
+
+    &__main {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px;
+    }
+
+    &__back {
+        margin-bottom: 20px;
+    }
+
+    &__back-button {
+        padding: 0;
+        color: variables.$color-text-secondary;
+        font-size: 14px;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: variables.$color-primary;
+        }
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 3px;
+        }
+    }
+
+    &__heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    &__heading-text {
+        min-width: 0;
+    }
+
+    &__title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    &__branch {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 5px 9px;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 6px;
+    }
+
+    &__actions {
+        display: flex;
+        flex-shrink: 0;
+        gap: 10px;
+    }
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 3px solid variables.$color-primary-border;
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        &--secondary {
+            color: variables.$color-text-primary;
+            background: #ffffff;
+            border: 1px solid variables.$color-border;
+
+            &:hover:not(:disabled) {
+                color: variables.$color-primary;
+                border-color: variables.$color-primary;
+            }
+        }
+
+        &--danger {
+            color: #ffffff;
+            background: #b42318;
+            border: 1px solid #b42318;
+
+            &:hover:not(:disabled) {
+                background: #912018;
+                border-color: #912018;
+            }
+        }
+    }
+
+    &__delete-error {
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        color: #b42318;
+        font-size: 14px;
+        background: #fef3f2;
+        border: 1px solid #fecdca;
+        border-radius: 8px;
+    }
+
+    &__content {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    &__card {
+        padding: 24px;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 10px;
+    }
+
+    &__card-title {
+        margin: 0 0 20px;
+        font-size: 18px;
+    }
+
+    &__definition-list {
+        display: grid;
+        gap: 18px;
+        margin: 0;
+    }
+
+    &__definition-item {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 16px;
+
+        dt {
+            color: variables.$color-text-secondary;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        dd {
+            min-width: 0;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    &__state {
+        padding: 40px 24px;
+        color: variables.$color-text-secondary;
+        text-align: center;
+        background: #ffffff;
+        border: 1px solid variables.$color-border;
+        border-radius: 10px;
+
+        &--error {
+            color: #b42318;
+        }
+    }
+
+    @include mixins.mobile {
+        display: block;
+
+        &__body {
+            display: block;
+        }
+
+        &__main {
+            padding: 20px 16px;
+        }
+
+        &__heading {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        &__title {
+            font-size: 24px;
+        }
+
+        &__actions {
+            width: 100%;
+        }
+
+        &__button {
+            flex: 1;
+        }
+
+        &__content {
+            grid-template-columns: 1fr;
+        }
+
+        &__definition-item {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+    }
+}

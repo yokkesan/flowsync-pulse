@@ -71,6 +71,12 @@ type TaskCreator interface {
 		ctx context.Context,
 		projectID uint64,
 	) ([]Response, error)
+
+	FindAllAccessible(
+		ctx context.Context,
+		userID uint64,
+		companyID uint64,
+	) ([]Response, error)
 }
 
 type Service struct {
@@ -459,4 +465,23 @@ func trimOptionalString(
 	}
 
 	return &trimmedValue
+}
+
+func (s *Service) ListAccessible(
+	ctx context.Context,
+	authUserID uint64,
+	companyID uint64,
+) (ListResponse, error) {
+	tasks, err := s.repository.FindAllAccessible(
+		ctx,
+		authUserID,
+		companyID,
+	)
+	if err != nil {
+		return ListResponse{}, err
+	}
+
+	return ListResponse{
+		Tasks: tasks,
+	}, nil
 }

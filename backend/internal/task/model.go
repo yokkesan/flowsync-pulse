@@ -44,6 +44,7 @@ type UpdateRequest struct {
 type Response struct {
 	TaskID         uint64     `json:"task_id"`
 	ProjectID      uint64     `json:"project_id"`
+	ProjectName    string     `json:"project_name"`
 	Name           string     `json:"name"`
 	Description    *string    `json:"description"`
 	AssigneeUserID uint64     `json:"assignee_user_id"`

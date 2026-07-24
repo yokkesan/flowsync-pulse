@@ -10,33 +10,48 @@ func RegisterRoutes(
 	api *gin.RouterGroup,
 	handler *Handler,
 ) {
-	tasks := api.Group(
+	accessibleTasks := api.Group(
+		"/tasks",
+	)
+
+	accessibleTasks.Use(
+		middleware.Authenticate(),
+	)
+
+	accessibleTasks.GET(
+		"",
+		handler.ListAccessible,
+	)
+
+	projectTasks := api.Group(
 		"/projects/:projectId/tasks",
 	)
 
-	tasks.Use(middleware.Authenticate())
+	projectTasks.Use(
+		middleware.Authenticate(),
+	)
 
-	tasks.GET(
+	projectTasks.GET(
 		"",
 		handler.List,
 	)
 
-	tasks.GET(
+	projectTasks.GET(
 		"/:taskId",
 		handler.Get,
 	)
 
-	tasks.PUT(
+	projectTasks.PUT(
 		"/:taskId",
 		handler.Update,
 	)
 
-	tasks.DELETE(
+	projectTasks.DELETE(
 		"/:taskId",
 		handler.Delete,
 	)
 
-	tasks.POST(
+	projectTasks.POST(
 		"",
 		handler.Create,
 	)

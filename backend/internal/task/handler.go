@@ -573,3 +573,59 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+// ListAccessible godoc
+// @Summary 閲覧可能なタスク一覧取得
+// @Description ログインユーザーが所属するプロジェクトのタスク一覧を取得します。
+// @Tags tasks
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} ListResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/tasks [get]
+func (h *Handler) ListAccessible(
+	c *gin.Context,
+) {
+	authUserID := c.GetUint64(
+		middleware.ContextUserIDKey,
+	)
+	companyID := c.GetUint64(
+		middleware.ContextCompanyIDKey,
+	)
+
+	if authUserID == 0 || companyID == 0 {
+		c.JSON(
+			http.StatusUnauthorized,
+			ErrorResponse{
+				Message: "ログイン情報が無効です。",
+			},
+		)
+		return
+	}
+
+	response, err :=
+		h.service.ListAccessible(
+			c.Request.Context(),
+			authUserID,
+			companyID,
+		)
+	if err != nil {
+		log.Printf(
+			"failed to list accessible tasks: user_id=%d company_id=%d error=%v",
+			authUserID,
+			companyID,
+			err,
+		)
+
+		c.JSON(
+			http.StatusInternalServerError,
+			ErrorResponse{
+				Message: "タスク一覧の取得に失敗しました。",
+			},
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
