@@ -575,8 +575,8 @@ func (h *Handler) Delete(c *gin.Context) {
 }
 
 // ListAccessible godoc
-// @Summary 閲覧可能なタスク一覧取得
-// @Description ログインユーザーが所属するプロジェクトのタスク一覧を取得します。
+// @Summary 会社内のタスク一覧取得
+// @Description ログインユーザーと同じ会社に属する全プロジェクトのタスク一覧を取得します。
 // @Tags tasks
 // @Produce json
 // @Security BearerAuth

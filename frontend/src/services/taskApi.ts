@@ -218,3 +218,30 @@ export async function deleteTask(
         );
     }
 }
+
+export async function getProjectTasks(
+    accessToken: string,
+    projectId: number,
+): Promise<TaskListResponse> {
+    validateProjectId(projectId);
+
+    const response = await fetch(
+        `${API_BASE_URL}/projects/${projectId}/tasks`,
+        {
+            method: 'GET',
+            headers:
+                createAuthorizationHeaders(
+                    accessToken,
+                ),
+        },
+    );
+
+    if (!response.ok) {
+        throw await parseErrorResponse(
+            response,
+            'プロジェクトのタスク一覧取得に失敗しました。',
+        );
+    }
+
+    return (await response.json()) as TaskListResponse;
+}

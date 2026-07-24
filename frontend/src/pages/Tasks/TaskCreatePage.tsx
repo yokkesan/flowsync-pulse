@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useState,
 } from 'react';
 import {
@@ -12,6 +13,7 @@ import { AppSidebar } from '../../components/layout/AppSidebar';
 import { TaskForm } from '../../components/tasks/TaskForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProject } from '../../hooks/useProject';
+import { useProjects } from '../../hooks/useProjects';
 import { ApiError } from '../../services/authApi';
 import { getAccessToken } from '../../services/authStorage';
 import { createTask } from '../../services/taskApi';
@@ -46,8 +48,36 @@ export function TaskCreatePage() {
 
     const { status, user } = useAuth();
 
-    const projectId =
+    const routeProjectId =
         parseProjectId(projectIdParam);
+
+    const isProjectFixed =
+        routeProjectId !== null;
+
+    const [
+        selectedProjectId,
+        setSelectedProjectId,
+    ] = useState<number | null>(
+        routeProjectId,
+    );
+
+    useEffect(() => {
+        if (routeProjectId) {
+            setSelectedProjectId(
+                routeProjectId,
+            );
+        }
+    }, [routeProjectId]);
+
+    const projectId =
+        routeProjectId ??
+        selectedProjectId;
+
+    const {
+        projects,
+        isLoading: areProjectsLoading,
+        errorMessage: projectsErrorMessage,
+    } = useProjects();
 
     const {
         project,
@@ -83,21 +113,12 @@ export function TaskCreatePage() {
         );
     }
 
-    if (!projectId) {
-        return (
-            <Navigate
-                to="/projects"
-                replace
-            />
-        );
-    }
-
     async function handleSubmit(
         request: TaskWriteRequest,
     ): Promise<void> {
         if (!projectId) {
             setSubmitErrorMessage(
-                'プロジェクトIDが正しくありません。',
+                'プロジェクトを選択してください。',
             );
             return;
         }
@@ -144,6 +165,17 @@ export function TaskCreatePage() {
         }
     }
 
+    function handleCancel(): void {
+        if (isProjectFixed && projectId) {
+            navigate(
+                `/projects/${projectId}/tasks`,
+            );
+            return;
+        }
+
+        navigate('/tasks');
+    }
+
     return (
         <div className="task-list-page">
             <AppSidebar
@@ -174,7 +206,100 @@ export function TaskCreatePage() {
                         </div>
                     </section>
 
-                    {isProjectLoading ? (
+                    {!isProjectFixed && (
+                        <section className="task-form">
+                            <div className="task-form__fields">
+                                <label className="task-form__field">
+                                    <span className="task-form__label">
+                                        プロジェクト
+                                        <span aria-hidden="true">
+                                            *
+                                        </span>
+                                    </span>
+
+                                    <select
+                                        className="task-form__select"
+                                        required
+                                        disabled={
+                                            areProjectsLoading ||
+                                            isSubmitting
+                                        }
+                                        value={
+                                            selectedProjectId ??
+                                            ''
+                                        }
+                                        onChange={(event) => {
+                                            const value =
+                                                Number(
+                                                    event
+                                                        .target
+                                                        .value,
+                                                );
+
+                                            setSelectedProjectId(
+                                                Number.isSafeInteger(
+                                                    value,
+                                                ) &&
+                                                    value >
+                                                        0
+                                                    ? value
+                                                    : null,
+                                            );
+
+                                            setSubmitErrorMessage(
+                                                '',
+                                            );
+                                        }}
+                                    >
+                                        <option value="">
+                                            選択してください
+                                        </option>
+
+                                        {projects.map(
+                                            (
+                                                currentProject,
+                                            ) => (
+                                                <option
+                                                    key={
+                                                        currentProject.project_id
+                                                    }
+                                                    value={
+                                                        currentProject.project_id
+                                                    }
+                                                >
+                                                    {
+                                                        currentProject.name
+                                                    }
+                                                </option>
+                                            ),
+                                        )}
+                                    </select>
+                                </label>
+                            </div>
+                        </section>
+                    )}
+
+                    {areProjectsLoading &&
+                    !isProjectFixed ? (
+                        <section
+                            className="task-list-page__state"
+                            role="status"
+                        >
+                            プロジェクト一覧を読み込んでいます。
+                        </section>
+                    ) : projectsErrorMessage &&
+                      !isProjectFixed ? (
+                        <section
+                            className="task-list-page__state task-list-page__state--error"
+                            role="alert"
+                        >
+                            {projectsErrorMessage}
+                        </section>
+                    ) : !projectId ? (
+                        <section className="task-list-page__state">
+                            対象プロジェクトを選択してください。
+                        </section>
+                    ) : isProjectLoading ? (
                         <section
                             className="task-list-page__state"
                             role="status"
@@ -194,7 +319,10 @@ export function TaskCreatePage() {
                         </section>
                     ) : (
                         <TaskForm
-                            members={project.members}
+                            key={project.project_id}
+                            members={
+                                project.members
+                            }
                             isSubmitting={
                                 isSubmitting
                             }
@@ -202,12 +330,12 @@ export function TaskCreatePage() {
                                 submitErrorMessage
                             }
                             submitLabel="登録する"
-                            onSubmit={handleSubmit}
-                            onCancel={() => {
-                                navigate(
-                                    `/projects/${projectId}/tasks`,
-                                );
-                            }}
+                            onSubmit={
+                                handleSubmit
+                            }
+                            onCancel={
+                                handleCancel
+                            }
                         />
                     )}
                 </main>

@@ -16,12 +16,19 @@ export type TaskPriorityFilter =
     | 'all'
     | TaskPriority;
 
+export type TaskProjectFilterOption = {
+    project_id: number;
+    project_name: string;
+};
+
 type TaskFiltersProps = {
     searchKeyword: string;
     statusFilter: TaskStatusFilter;
     assigneeFilter: string;
     priorityFilter: TaskPriorityFilter;
     members: ProjectMember[];
+    projectFilter?: string;
+    projects?: TaskProjectFilterOption[];
     onSearchKeywordChange: (
         value: string,
     ) => void;
@@ -34,6 +41,9 @@ type TaskFiltersProps = {
     onPriorityFilterChange: (
         value: TaskPriorityFilter,
     ) => void;
+    onProjectFilterChange?: (
+        value: string,
+    ) => void;
 };
 
 export function TaskFilters({
@@ -42,10 +52,13 @@ export function TaskFilters({
     assigneeFilter,
     priorityFilter,
     members,
+    projectFilter,
+    projects,
     onSearchKeywordChange,
     onStatusFilterChange,
     onAssigneeFilterChange,
     onPriorityFilterChange,
+    onProjectFilterChange,
 }: TaskFiltersProps) {
     function handleSearchKeywordChange(
         event: ChangeEvent<HTMLInputElement>,
@@ -79,6 +92,19 @@ export function TaskFilters({
         );
     }
 
+    function handleProjectFilterChange(
+        event: ChangeEvent<HTMLSelectElement>,
+    ): void {
+        onProjectFilterChange?.(
+            event.target.value,
+        );
+    }
+
+    const shouldShowProjectFilter =
+        projectFilter !== undefined &&
+        projects !== undefined &&
+        onProjectFilterChange !== undefined;
+
     return (
         <section
             className="task-filters"
@@ -103,6 +129,36 @@ export function TaskFilters({
                     }
                 />
             </div>
+
+            {shouldShowProjectFilter && (
+                <select
+                    className="task-filters__select"
+                    value={projectFilter}
+                    aria-label="プロジェクトで絞り込む"
+                    onChange={
+                        handleProjectFilterChange
+                    }
+                >
+                    <option value="all">
+                        すべてのプロジェクト
+                    </option>
+
+                    {projects.map((project) => (
+                        <option
+                            key={
+                                project.project_id
+                            }
+                            value={
+                                project.project_id
+                            }
+                        >
+                            {
+                                project.project_name
+                            }
+                        </option>
+                    ))}
+                </select>
+            )}
 
             <select
                 className="task-filters__select"
