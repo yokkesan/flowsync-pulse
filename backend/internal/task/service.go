@@ -74,7 +74,6 @@ type TaskCreator interface {
 
 	FindAllAccessible(
 		ctx context.Context,
-		userID uint64,
 		companyID uint64,
 	) ([]Response, error)
 }
@@ -474,7 +473,6 @@ func (s *Service) ListAccessible(
 ) (ListResponse, error) {
 	tasks, err := s.repository.FindAllAccessible(
 		ctx,
-		authUserID,
 		companyID,
 	)
 	if err != nil {

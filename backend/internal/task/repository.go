@@ -393,7 +393,6 @@ func (r *Repository) FindAllByProjectID(
 
 func (r *Repository) FindAllAccessible(
 	ctx context.Context,
-	userID uint64,
 	companyID uint64,
 ) ([]Response, error) {
 	rows, err := r.db.QueryContext(
@@ -418,10 +417,6 @@ func (r *Repository) FindAllAccessible(
 			FROM tasks t
 			INNER JOIN projects p
 				ON p.id = t.project_id
-			INNER JOIN project_members pm
-				ON pm.project_id = p.id
-			   AND pm.user_id = ?
-			   AND pm.status = 'active'
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
 			INNER JOIN task_branches tb
@@ -431,7 +426,6 @@ func (r *Repository) FindAllAccessible(
 				t.created_at DESC,
 				t.id DESC
 		`,
-		userID,
 		companyID,
 	)
 	if err != nil {

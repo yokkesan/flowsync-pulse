@@ -5,7 +5,6 @@ import {
 import {
     Navigate,
     useNavigate,
-    useParams,
 } from 'react-router-dom';
 
 import { AppHeader } from '../../components/layout/AppHeader';
@@ -18,46 +17,21 @@ import {
 import { TaskPagination } from '../../components/tasks/TaskPagination';
 import { TaskTable } from '../../components/tasks/TaskTable';
 import { useAuth } from '../../contexts/AuthContext';
-import { useProjectTasks } from '../../hooks/useProjectTasks';
+import { useAllTasks } from '../../hooks/useAllTasks';
 import type { ProjectMember } from '../../types/project';
 
 const TASKS_PER_PAGE = 10;
 
-function parseProjectId(
-    value: string | undefined,
-): number | null {
-    if (!value) {
-        return null;
-    }
-
-    const projectId = Number(value);
-
-    if (
-        !Number.isSafeInteger(projectId) ||
-        projectId <= 0
-    ) {
-        return null;
-    }
-
-    return projectId;
-}
-
-export function TaskListPage() {
+export function AllTaskListPage() {
     const navigate = useNavigate();
 
-    const { projectId: projectIdParam } =
-        useParams();
-
     const { status, user } = useAuth();
-
-    const projectId =
-        parseProjectId(projectIdParam);
 
     const {
         tasks,
         isLoading,
         errorMessage,
-    } = useProjectTasks(projectId ?? 0);
+    } = useAllTasks();
 
     const [
         searchKeyword,
@@ -72,6 +46,11 @@ export function TaskListPage() {
     const [
         assigneeFilter,
         setAssigneeFilter,
+    ] = useState('all');
+
+    const [
+        projectFilter,
+        setProjectFilter,
     ] = useState('all');
 
     const [
@@ -125,6 +104,48 @@ export function TaskListPage() {
         [tasks],
     );
 
+    const projects = useMemo(
+        () => {
+            const projectMap = new Map<
+                number,
+                {
+                    project_id: number;
+                    project_name: string;
+                }
+            >();
+
+            tasks.forEach((task) => {
+                if (
+                    projectMap.has(
+                        task.project_id,
+                    )
+                ) {
+                    return;
+                }
+
+                projectMap.set(
+                    task.project_id,
+                    {
+                        project_id:
+                            task.project_id,
+                        project_name:
+                            task.project_name,
+                    },
+                );
+            });
+
+            return Array.from(
+                projectMap.values(),
+            ).sort((first, second) =>
+                first.project_name.localeCompare(
+                    second.project_name,
+                    'ja',
+                ),
+            );
+        },
+        [tasks],
+    );
+
     const filteredTasks = useMemo(() => {
         const normalizedKeyword =
             searchKeyword
@@ -150,6 +171,11 @@ export function TaskListPage() {
                         normalizedKeyword,
                     );
 
+            const matchesProject =
+                projectFilter === 'all' ||
+                task.project_id ===
+                    Number(projectFilter);
+
             const matchesStatus =
                 statusFilter === 'all' ||
                 task.status ===
@@ -167,6 +193,7 @@ export function TaskListPage() {
 
             return (
                 matchesKeyword &&
+                matchesProject &&
                 matchesStatus &&
                 matchesAssignee &&
                 matchesPriority
@@ -175,6 +202,7 @@ export function TaskListPage() {
     }, [
         assigneeFilter,
         priorityFilter,
+        projectFilter,
         searchKeyword,
         statusFilter,
         tasks,
@@ -219,6 +247,13 @@ export function TaskListPage() {
         resetCurrentPage();
     }
 
+    function handleProjectFilterChange(
+        value: string,
+    ): void {
+        setProjectFilter(value);
+        resetCurrentPage();
+    }
+
     function handleStatusFilterChange(
         value: TaskStatusFilter,
     ): void {
@@ -240,25 +275,24 @@ export function TaskListPage() {
         resetCurrentPage();
     }
 
+    function handleCreateTask(): void {
+        navigate('/tasks/new');
+    }
+
     function handleSelectTask(
         taskId: number,
     ): void {
-        if (!projectId) {
-            return;
-        }
-
-        navigate(
-            `/projects/${projectId}/tasks/${taskId}`,
+        const selectedTask = tasks.find(
+            (task) =>
+                task.task_id === taskId,
         );
-    }
 
-    function handleCreateTask(): void {
-        if (!projectId) {
+        if (!selectedTask) {
             return;
         }
 
         navigate(
-            `/projects/${projectId}/tasks/new`,
+            `/projects/${selectedTask.project_id}/tasks/${selectedTask.task_id}`,
         );
     }
 
@@ -277,15 +311,6 @@ export function TaskListPage() {
         return (
             <Navigate
                 to="/login"
-                replace
-            />
-        );
-    }
-
-    if (!projectId) {
-        return (
-            <Navigate
-                to="/projects"
                 replace
             />
         );
@@ -312,11 +337,11 @@ export function TaskListPage() {
                     <header className="task-list-page__heading">
                         <div className="task-list-page__heading-text">
                             <h1 className="task-list-page__title">
-                                タスク一覧
+                                全タスク一覧
                             </h1>
 
                             <p className="task-list-page__description">
-                                このプロジェクトのタスクを確認できます。
+                                会社内の全プロジェクトに登録されているタスクを確認できます。
                             </p>
                         </div>
 
@@ -349,6 +374,9 @@ export function TaskListPage() {
                                 searchKeyword={
                                     searchKeyword
                                 }
+                                projectFilter={
+                                    projectFilter
+                                }
                                 statusFilter={
                                     statusFilter
                                 }
@@ -358,11 +386,17 @@ export function TaskListPage() {
                                 priorityFilter={
                                     priorityFilter
                                 }
+                                projects={
+                                    projects
+                                }
                                 members={
                                     assignees
                                 }
                                 onSearchKeywordChange={
                                     handleSearchKeywordChange
+                                }
+                                onProjectFilterChange={
+                                    handleProjectFilterChange
                                 }
                                 onStatusFilterChange={
                                     handleStatusFilterChange

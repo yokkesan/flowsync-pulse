@@ -8,13 +8,14 @@ import { getAccessToken } from '../services/authStorage';
 import { getTasks } from '../services/taskApi';
 import type { Task } from '../types/task';
 
-type UseTasksResult = {
+type UseAllTasksResult = {
     tasks: Task[];
     isLoading: boolean;
     errorMessage: string;
 };
 
-export function useTasks(): UseTasksResult {
+export function useAllTasks():
+UseAllTasksResult {
     const [tasks, setTasks] =
         useState<Task[]>([]);
 
@@ -29,7 +30,7 @@ export function useTasks(): UseTasksResult {
     useEffect(() => {
         let isMounted = true;
 
-        async function loadTasks():
+        async function loadAllTasks():
         Promise<void> {
             const accessToken =
                 getAccessToken();
@@ -69,7 +70,9 @@ export function useTasks(): UseTasksResult {
 
                 setTasks([]);
 
-                if (error instanceof ApiError) {
+                if (
+                    error instanceof ApiError
+                ) {
                     setErrorMessage(
                         error.message,
                     );
@@ -77,7 +80,7 @@ export function useTasks(): UseTasksResult {
                 }
 
                 setErrorMessage(
-                    'タスク一覧の取得中に予期しないエラーが発生しました。',
+                    '会社内のタスク一覧取得中に予期しないエラーが発生しました。',
                 );
             } finally {
                 if (isMounted) {
@@ -86,7 +89,7 @@ export function useTasks(): UseTasksResult {
             }
         }
 
-        void loadTasks();
+        void loadAllTasks();
 
         return () => {
             isMounted = false;

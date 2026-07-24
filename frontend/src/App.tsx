@@ -14,6 +14,7 @@ import { ProjectCreatePage } from './pages/Projects/ProjectCreatePage';
 import { ProjectDetailPage } from './pages/Projects/ProjectDetailPage';
 import { ProjectEditPage } from './pages/Projects/ProjectEditPage';
 
+import { AllTaskListPage } from './pages/Tasks/AllTaskListPage';
 import { TaskListPage } from './pages/Tasks/TaskListPage';
 import { TaskCreatePage } from './pages/Tasks/TaskCreatePage';
 import { TaskDetailPage } from './pages/Tasks/TaskDetailPage';
@@ -105,7 +106,16 @@ function App() {
         path="/tasks"
         element={
           <ProtectedRoute>
-            <TaskListPage />
+            <AllTaskListPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tasks/new"
+        element={
+          <ProtectedRoute>
+            <TaskCreatePage />
           </ProtectedRoute>
         }
       />
