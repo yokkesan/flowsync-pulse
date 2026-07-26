@@ -20,6 +20,7 @@ type CreateParams struct {
 	CreatedByID uint64
 	Name        string
 	Slug        string
+	ProjectKey  string
 	Description *string
 	Status      string
 	StartDate   *string
@@ -37,6 +38,7 @@ type UpdateParams struct {
 	UpdatedByID uint64
 	Name        string
 	Slug        string
+	ProjectKey  *string
 	Description *string
 	Status      string
 	StartDate   *string
@@ -167,6 +169,40 @@ func (r *Repository) SlugExists(
 	return exists, nil
 }
 
+func (r *Repository) ProjectKeyExists(
+	ctx context.Context,
+	companyID uint64,
+	projectKey string,
+	excludeProjectID uint64,
+) (bool, error) {
+	var exists bool
+
+	err := r.db.QueryRowContext(
+		ctx,
+		`
+			SELECT EXISTS (
+				SELECT 1
+				FROM projects
+				WHERE company_id = ?
+				  AND project_key = ?
+				  AND (? = 0 OR id <> ?)
+			)
+		`,
+		companyID,
+		projectKey,
+		excludeProjectID,
+		excludeProjectID,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check project key: %w",
+			err,
+		)
+	}
+
+	return exists, nil
+}
+
 func (r *Repository) Create(
 	ctx context.Context,
 	params CreateParams,
@@ -200,16 +236,18 @@ func (r *Repository) Create(
 				company_id,
 				name,
 				slug,
+				project_key,
 				description,
 				status,
 				started_at,
 				ended_at
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		`,
 		params.CompanyID,
 		params.Name,
 		params.Slug,
+		params.ProjectKey,
 		params.Description,
 		params.Status,
 		startedAt,
@@ -265,6 +303,7 @@ func (r *Repository) FindAllByUser(
 				p.company_id,
 				p.name,
 				p.slug,
+				p.project_key,
 				p.description,
 				p.status,
 				p.started_at,
@@ -285,6 +324,7 @@ func (r *Repository) FindAllByUser(
 				p.company_id,
 				p.name,
 				p.slug,
+				p.project_key,
 				p.description,
 				p.status,
 				p.started_at,
@@ -344,6 +384,7 @@ func (r *Repository) FindByID(
 				p.company_id,
 				p.name,
 				p.slug,
+				p.project_key,
 				p.description,
 				p.status,
 				p.started_at,
@@ -361,6 +402,7 @@ func (r *Repository) FindByID(
 				p.company_id,
 				p.name,
 				p.slug,
+				p.project_key,
 				p.description,
 				p.status,
 				p.started_at,
@@ -423,6 +465,7 @@ func (r *Repository) Update(
 			SET
 				name = ?,
 				slug = ?,
+				project_key = COALESCE(project_key, ?),
 				description = ?,
 				status = ?,
 				started_at = ?,
@@ -432,6 +475,7 @@ func (r *Repository) Update(
 		`,
 		params.Name,
 		params.Slug,
+		params.ProjectKey,
 		params.Description,
 		params.Status,
 		startedAt,
@@ -456,6 +500,25 @@ func (r *Repository) Update(
 
 	if affectedRows == 0 {
 		return ErrProjectNotFound
+	}
+
+	if params.ProjectKey != nil {
+		if _, err := tx.ExecContext(
+			ctx,
+			`
+				UPDATE tasks
+				SET task_key = CONCAT(?, '-', task_number)
+				WHERE project_id = ?
+				  AND task_key IS NULL
+			`,
+			*params.ProjectKey,
+			params.ProjectID,
+		); err != nil {
+			return fmt.Errorf(
+				"failed to generate existing task keys: %w",
+				err,
+			)
+		}
 	}
 
 	if _, err := tx.ExecContext(
@@ -639,6 +702,7 @@ type rowScanner interface {
 
 func scanProject(scanner rowScanner) (Response, error) {
 	var project Response
+	var projectKey sql.NullString
 	var description sql.NullString
 	var startedAt sql.NullTime
 	var endedAt sql.NullTime
@@ -648,6 +712,7 @@ func scanProject(scanner rowScanner) (Response, error) {
 		&project.CompanyID,
 		&project.Name,
 		&project.Slug,
+		&projectKey,
 		&description,
 		&project.Status,
 		&startedAt,
@@ -659,6 +724,7 @@ func scanProject(scanner rowScanner) (Response, error) {
 		return Response{}, err
 	}
 
+	project.ProjectKey = nullableStringPointer(projectKey)
 	project.Description = nullableStringPointer(description)
 	project.StartDate = nullableDateString(startedAt)
 	project.EndDate = nullableDateString(endedAt)

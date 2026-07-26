@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+var ErrProjectKeyNotSet = errors.New(
+	"project key is not set",
+)
+
 type Repository struct {
 	db *sql.DB
 }
@@ -173,11 +177,48 @@ func (r *Repository) Create(
 		_ = tx.Rollback()
 	}()
 
+	var projectKey sql.NullString
+	var taskNumber uint64
+
+	err = tx.QueryRowContext(
+		ctx,
+		`
+			SELECT
+				project_key,
+				next_task_number
+			FROM projects
+			WHERE id = ?
+			FOR UPDATE
+		`,
+		params.ProjectID,
+	).Scan(
+		&projectKey,
+		&taskNumber,
+	)
+	if err != nil {
+		return CreateResult{}, fmt.Errorf(
+			"failed to lock project task sequence: %w",
+			err,
+		)
+	}
+
+	if !projectKey.Valid || projectKey.String == "" {
+		return CreateResult{}, ErrProjectKeyNotSet
+	}
+
+	taskKey := fmt.Sprintf(
+		"%s-%d",
+		projectKey.String,
+		taskNumber,
+	)
+
 	result, err := tx.ExecContext(
 		ctx,
 		`
 			INSERT INTO tasks (
 				project_id,
+				task_number,
+				task_key,
 				name,
 				description,
 				assignee_user_id,
@@ -187,9 +228,11 @@ func (r *Repository) Create(
 				due_date,
 				completed_at
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`,
 		params.ProjectID,
+		taskNumber,
+		taskKey,
 		params.Name,
 		params.Description,
 		params.AssigneeUserID,
@@ -214,7 +257,22 @@ func (r *Repository) Create(
 		)
 	}
 
-	_, err = tx.ExecContext(
+	if _, err := tx.ExecContext(
+		ctx,
+		`
+			UPDATE projects
+			SET next_task_number = next_task_number + 1
+			WHERE id = ?
+		`,
+		params.ProjectID,
+	); err != nil {
+		return CreateResult{}, fmt.Errorf(
+			"failed to update project task sequence: %w",
+			err,
+		)
+	}
+
+	if _, err := tx.ExecContext(
 		ctx,
 		`
 			INSERT INTO task_branches (
@@ -225,8 +283,7 @@ func (r *Repository) Create(
 		`,
 		taskID,
 		params.BranchName,
-	)
-	if err != nil {
+	); err != nil {
 		return CreateResult{}, fmt.Errorf(
 			"failed to create task branch: %w",
 			err,
@@ -250,6 +307,7 @@ func (r *Repository) FindByID(
 	params FindByIDParams,
 ) (Response, error) {
 	var response Response
+	var taskKey sql.NullString
 	var description sql.NullString
 	var startDate sql.NullTime
 	var dueDate sql.NullTime
@@ -262,6 +320,8 @@ func (r *Repository) FindByID(
 				t.id,
 				t.project_id,
 				p.name,
+				t.task_number,
+				t.task_key,
 				t.name,
 				t.description,
 				t.assignee_user_id,
@@ -290,6 +350,8 @@ func (r *Repository) FindByID(
 		&response.TaskID,
 		&response.ProjectID,
 		&response.ProjectName,
+		&response.TaskNumber,
+		&taskKey,
 		&response.Name,
 		&description,
 		&response.AssigneeUserID,
@@ -316,6 +378,7 @@ func (r *Repository) FindByID(
 
 	setNullableTaskFields(
 		&response,
+		taskKey,
 		description,
 		startDate,
 		dueDate,
@@ -336,6 +399,8 @@ func (r *Repository) FindAllByProjectID(
 				t.id,
 				t.project_id,
 				p.name,
+				t.task_number,
+				t.task_key,
 				t.name,
 				t.description,
 				t.assignee_user_id,
@@ -402,6 +467,8 @@ func (r *Repository) FindAllAccessible(
 				t.id,
 				t.project_id,
 				p.name,
+				t.task_number,
+				t.task_key,
 				t.name,
 				t.description,
 				t.assignee_user_id,
@@ -605,6 +672,7 @@ func scanTaskResponse(
 	scanner taskScanner,
 ) (Response, error) {
 	var response Response
+	var taskKey sql.NullString
 	var description sql.NullString
 	var startDate sql.NullTime
 	var dueDate sql.NullTime
@@ -614,6 +682,8 @@ func scanTaskResponse(
 		&response.TaskID,
 		&response.ProjectID,
 		&response.ProjectName,
+		&response.TaskNumber,
+		&taskKey,
 		&response.Name,
 		&description,
 		&response.AssigneeUserID,
@@ -635,6 +705,7 @@ func scanTaskResponse(
 
 	setNullableTaskFields(
 		&response,
+		taskKey,
 		description,
 		startDate,
 		dueDate,
@@ -646,14 +717,18 @@ func scanTaskResponse(
 
 func setNullableTaskFields(
 	response *Response,
+	taskKey sql.NullString,
 	description sql.NullString,
 	startDate sql.NullTime,
 	dueDate sql.NullTime,
 	completedAt sql.NullTime,
 ) {
+	if taskKey.Valid {
+		response.TaskKey = taskKey.String
+	}
+
 	if description.Valid {
-		response.Description =
-			&description.String
+		response.Description = &description.String
 	}
 
 	if startDate.Valid {
@@ -671,7 +746,6 @@ func setNullableTaskFields(
 	}
 
 	if completedAt.Valid {
-		response.CompletedAt =
-			&completedAt.Time
+		response.CompletedAt = &completedAt.Time
 	}
 }

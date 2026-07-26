@@ -3,16 +3,22 @@ package project
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 )
 
 var (
-	ErrProjectAccessDenied      = errors.New("project access denied")
-	ErrInvalidProjectMember     = errors.New("invalid project member")
-	ErrProjectSlugAlreadyExists = errors.New("project slug already exists")
-	ErrInvalidProjectDateRange  = errors.New("invalid project date range")
+	ErrProjectAccessDenied       = errors.New("project access denied")
+	ErrInvalidProjectMember      = errors.New("invalid project member")
+	ErrProjectSlugAlreadyExists  = errors.New("project slug already exists")
+	ErrProjectKeyAlreadyExists   = errors.New("project key already exists")
+	ErrInvalidProjectKey         = errors.New("invalid project key")
+	ErrProjectKeyCannotBeChanged = errors.New("project key cannot be changed")
+	ErrInvalidProjectDateRange   = errors.New("invalid project date range")
 )
+
+var projectKeyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{1,9}$`)
 
 type repositoryInterface interface {
 	HasProjectAccess(
@@ -32,6 +38,13 @@ type repositoryInterface interface {
 		ctx context.Context,
 		companyID uint64,
 		slug string,
+		excludeProjectID uint64,
+	) (bool, error)
+
+	ProjectKeyExists(
+		ctx context.Context,
+		companyID uint64,
+		projectKey string,
 		excludeProjectID uint64,
 	) (bool, error)
 
@@ -111,6 +124,26 @@ func (s *Service) Create(
 		return nil, ErrProjectSlugAlreadyExists
 	}
 
+	projectKey := normalizeProjectKey(request.ProjectKey)
+
+	if !isValidProjectKey(projectKey) {
+		return nil, ErrInvalidProjectKey
+	}
+
+	projectKeyExists, err := s.repository.ProjectKeyExists(
+		ctx,
+		companyID,
+		projectKey,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if projectKeyExists {
+		return nil, ErrProjectKeyAlreadyExists
+	}
+
 	if !isValidDateRange(request.StartDate, request.EndDate) {
 		return nil, ErrInvalidProjectDateRange
 	}
@@ -122,6 +155,7 @@ func (s *Service) Create(
 			CreatedByID: userID,
 			Name:        strings.TrimSpace(request.Name),
 			Slug:        slug,
+			ProjectKey:  projectKey,
 			Description: normalizeOptionalString(request.Description),
 			Status:      request.Status,
 			StartDate:   normalizeOptionalString(request.StartDate),
@@ -200,11 +234,12 @@ func (s *Service) Update(
 		return nil, ErrProjectAccessDenied
 	}
 
-	if _, err := s.repository.FindByID(
+	currentProject, err := s.repository.FindByID(
 		ctx,
 		projectID,
 		companyID,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -239,6 +274,17 @@ func (s *Service) Update(
 		return nil, ErrProjectSlugAlreadyExists
 	}
 
+	projectKey, err := s.resolveProjectKeyForUpdate(
+		ctx,
+		companyID,
+		projectID,
+		currentProject.ProjectKey,
+		request.ProjectKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	if !isValidDateRange(request.StartDate, request.EndDate) {
 		return nil, ErrInvalidProjectDateRange
 	}
@@ -251,6 +297,7 @@ func (s *Service) Update(
 			UpdatedByID: userID,
 			Name:        strings.TrimSpace(request.Name),
 			Slug:        slug,
+			ProjectKey:  projectKey,
 			Description: normalizeOptionalString(request.Description),
 			Status:      request.Status,
 			StartDate:   normalizeOptionalString(request.StartDate),
@@ -301,6 +348,59 @@ func (s *Service) Delete(
 		projectID,
 		companyID,
 	)
+}
+
+func (s *Service) resolveProjectKeyForUpdate(
+	ctx context.Context,
+	companyID uint64,
+	projectID uint64,
+	currentProjectKey *string,
+	requestProjectKey *string,
+) (*string, error) {
+	if requestProjectKey == nil {
+		return nil, nil
+	}
+
+	normalizedProjectKey := normalizeProjectKey(*requestProjectKey)
+
+	if !isValidProjectKey(normalizedProjectKey) {
+		return nil, ErrInvalidProjectKey
+	}
+
+	if currentProjectKey != nil {
+		if *currentProjectKey != normalizedProjectKey {
+			return nil, ErrProjectKeyCannotBeChanged
+		}
+
+		// 既に同じキーが設定されているため、更新処理には渡さない。
+		return nil, nil
+	}
+
+	projectKeyExists, err := s.repository.ProjectKeyExists(
+		ctx,
+		companyID,
+		normalizedProjectKey,
+		projectID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if projectKeyExists {
+		return nil, ErrProjectKeyAlreadyExists
+	}
+
+	return &normalizedProjectKey, nil
+}
+
+func normalizeProjectKey(projectKey string) string {
+	return strings.ToUpper(
+		strings.TrimSpace(projectKey),
+	)
+}
+
+func isValidProjectKey(projectKey string) bool {
+	return projectKeyPattern.MatchString(projectKey)
 }
 
 func normalizeMemberIDs(

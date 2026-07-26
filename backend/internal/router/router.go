@@ -9,6 +9,7 @@ import (
 	_ "flowsync-pulse/backend/docs"
 	"flowsync-pulse/backend/internal/auth"
 	"flowsync-pulse/backend/internal/company"
+	"flowsync-pulse/backend/internal/extensiontoken"
 	"flowsync-pulse/backend/internal/project"
 	"flowsync-pulse/backend/internal/task"
 	"flowsync-pulse/backend/internal/user"
@@ -36,6 +37,7 @@ func New(db *sql.DB) *gin.Engine {
 	registerAuthRoutes(api, db)
 	registerProjectRoutes(api, db)
 	registerTaskRoutes(api, db)
+	registerExtensionTokenRoutes(api, db)
 	registerHealthRoute(api, db)
 
 	return engine
@@ -129,6 +131,20 @@ func registerTaskRoutes(
 	handler := task.NewHandler(service)
 
 	task.RegisterRoutes(api, handler)
+}
+
+func registerExtensionTokenRoutes(
+	api *gin.RouterGroup,
+	db *sql.DB,
+) {
+	repository := extensiontoken.NewRepository(db)
+	service := extensiontoken.NewService(repository)
+	handler := extensiontoken.NewHandler(service)
+
+	extensiontoken.RegisterRoutes(
+		api,
+		handler,
+	)
 }
 
 func registerHealthRoute(

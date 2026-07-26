@@ -16,6 +16,7 @@ type ErrorResponse struct {
 type CreateRequest struct {
 	Name        string   `json:"name" binding:"required,min=2,max=150"`
 	Slug        string   `json:"slug" binding:"required,min=2,max=100"`
+	ProjectKey  string   `json:"project_key" binding:"required,min=2,max=10"`
 	Description *string  `json:"description" binding:"omitempty,max=5000"`
 	Status      string   `json:"status" binding:"required,oneof=planned active completed archived"`
 	StartDate   *string  `json:"start_date" binding:"omitempty,datetime=2006-01-02"`
@@ -26,6 +27,7 @@ type CreateRequest struct {
 type UpdateRequest struct {
 	Name        string   `json:"name" binding:"required,min=2,max=150"`
 	Slug        string   `json:"slug" binding:"required,min=2,max=100"`
+	ProjectKey  *string  `json:"project_key" binding:"omitempty,min=2,max=10"`
 	Description *string  `json:"description" binding:"omitempty,max=5000"`
 	Status      string   `json:"status" binding:"required,oneof=planned active completed archived"`
 	StartDate   *string  `json:"start_date" binding:"omitempty,datetime=2006-01-02"`
@@ -45,6 +47,7 @@ type Response struct {
 	CompanyID   uint64           `json:"company_id"`
 	Name        string           `json:"name"`
 	Slug        string           `json:"slug"`
+	ProjectKey  *string          `json:"project_key"`
 	Description *string          `json:"description"`
 	Status      string           `json:"status"`
 	StartDate   *string          `json:"start_date"`
