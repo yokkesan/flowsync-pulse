@@ -107,6 +107,12 @@ func (h *Handler) Create(c *gin.Context) {
 			})
 			return
 
+		case errors.Is(err, ErrProjectKeyNotSet):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Message: "対象プロジェクトにプロジェクトキーが設定されていません。",
+			})
+			return
+
 		case errors.Is(err, ErrInvalidDateRange):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "期限は開始日以降の日付を指定してください。",

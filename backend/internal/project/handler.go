@@ -79,6 +79,18 @@ func (h *Handler) Create(c *gin.Context) {
 			})
 			return
 
+		case errors.Is(err, ErrInvalidProjectKey):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Message: "プロジェクトキーは、先頭を英大文字とし、半角英大文字・数字の2文字以上10文字以下で入力してください。",
+			})
+			return
+
+		case errors.Is(err, ErrProjectKeyAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Message: "このプロジェクトキーは既に使用されています。",
+			})
+			return
+
 		case errors.Is(err, ErrInvalidProjectDateRange):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "終了日は開始日以降の日付を指定してください。",
@@ -328,6 +340,24 @@ func (h *Handler) Update(c *gin.Context) {
 		case errors.Is(err, ErrProjectSlugAlreadyExists):
 			c.JSON(http.StatusConflict, ErrorResponse{
 				Message: "このスラッグは既に使用されています。",
+			})
+			return
+
+		case errors.Is(err, ErrInvalidProjectKey):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Message: "プロジェクトキーは、先頭を英大文字とし、半角英大文字・数字の2文字以上10文字以下で入力してください。",
+			})
+			return
+
+		case errors.Is(err, ErrProjectKeyAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Message: "このプロジェクトキーは既に使用されています。",
+			})
+			return
+
+		case errors.Is(err, ErrProjectKeyCannotBeChanged):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Message: "設定済みのプロジェクトキーは変更できません。",
 			})
 			return
 
