@@ -26,6 +26,9 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
       FRONTEND_ORIGIN: "http://localhost:${FRONTEND_PORT}"
       JWT_SECRET: ${JWT_SECRET}
+      EXTENSION_HEARTBEAT_INTERVAL_SECONDS: 30
+      EXTENSION_SESSION_TIMEOUT_SECONDS: 90
+      EXTENSION_TIMEOUT_CHECK_INTERVAL_SECONDS: 30
     volumes:
       - ./backend:/app
     depends_on:

@@ -11,10 +11,15 @@ package main
 // @name Authorization
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"flowsync-pulse/backend/internal/extension"
+	"flowsync-pulse/backend/internal/realtime"
 	appRouter "flowsync-pulse/backend/internal/router"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,7 +32,32 @@ func main() {
 	}
 	defer db.Close()
 
-	router := appRouter.New(db)
+	workerContext, stopWorker := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stopWorker()
+
+	realtimeHub := realtime.NewHub()
+
+	realtimeNotifier := realtime.NewExtensionNotifier(
+		realtimeHub,
+	)
+
+	timeoutWorker := extension.NewTimeoutWorker(
+		db,
+		realtimeNotifier,
+	)
+
+	go timeoutWorker.Start(
+		workerContext,
+	)
+
+	router := appRouter.New(
+		db,
+		realtimeHub,
+	)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {
