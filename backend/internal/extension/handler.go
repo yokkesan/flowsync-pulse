@@ -23,8 +23,8 @@ func NewHandler(
 }
 
 // WorkContext godoc
-// @Summary 拡張機能の作業コンテキスト送信
-// @Description VS Code拡張機能からリポジトリ・ブランチ・チケット情報を受信し、現在の作業セッションを開始または更新します。
+// @Summary 作業コンテキスト送信
+// @Description VSCode拡張機能から、現在のリポジトリ・ブランチ・タスク情報を送信します。
 // @Tags extension
 // @Accept json
 // @Produce json
@@ -40,30 +40,32 @@ func NewHandler(
 func (h *Handler) WorkContext(
 	c *gin.Context,
 ) {
-	authUserID := c.GetUint64(
+	var request WorkContextRequest
+
+	if err := c.ShouldBindJSON(
+		&request,
+	); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			ErrorResponse{
+				Message: "入力内容が正しくありません。",
+			},
+		)
+		return
+	}
+
+	userID := c.GetUint64(
 		middleware.ContextUserIDKey,
 	)
 	companyID := c.GetUint64(
 		middleware.ContextCompanyIDKey,
 	)
 
-	if authUserID == 0 || companyID == 0 {
+	if userID == 0 || companyID == 0 {
 		c.JSON(
 			http.StatusUnauthorized,
 			ErrorResponse{
-				Message: "拡張機能トークンが無効です。",
-			},
-		)
-		return
-	}
-
-	var request WorkContextRequest
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			ErrorResponse{
-				Message: "作業情報を正しく入力してください。",
+				Message: "拡張機能の認証情報が無効です。",
 			},
 		)
 		return
@@ -71,92 +73,20 @@ func (h *Handler) WorkContext(
 
 	response, err := h.service.WorkContext(
 		c.Request.Context(),
-		authUserID,
+		userID,
 		companyID,
 		request,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(
+		h.handleError(
+			c,
 			err,
-			ErrInvalidRepositoryURL,
-		):
-			c.JSON(
-				http.StatusBadRequest,
-				ErrorResponse{
-					Message: "リポジトリURLが正しくありません。",
-				},
-			)
-			return
-
-		case errors.Is(
-			err,
-			ErrInvalidOccurredAt,
-		):
-			c.JSON(
-				http.StatusBadRequest,
-				ErrorResponse{
-					Message: "情報取得日時が正しくありません。",
-				},
-			)
-			return
-
-		case errors.Is(
-			err,
-			ErrRepositoryNotFound,
-		):
-			c.JSON(
-				http.StatusNotFound,
-				ErrorResponse{
-					Message: "対象のリポジトリが登録されていません。",
-				},
-			)
-			return
-
-		case errors.Is(
-			err,
-			ErrExtensionProjectAccessDenied,
-		):
-			log.Printf(
-				"extension work context authorization denied: user_id=%d company_id=%d",
-				authUserID,
-				companyID,
-			)
-
-			c.JSON(
-				http.StatusForbidden,
-				ErrorResponse{
-					Message: "対象プロジェクトへアクセスする権限がありません。",
-				},
-			)
-			return
-
-		default:
-			log.Printf(
-				"failed to save extension work context: user_id=%d company_id=%d error=%v",
-				authUserID,
-				companyID,
-				err,
-			)
-
-			c.JSON(
-				http.StatusInternalServerError,
-				ErrorResponse{
-					Message: "作業セッションの保存に失敗しました。",
-				},
-			)
-			return
-		}
+			"failed to save extension work context",
+			userID,
+			companyID,
+		)
+		return
 	}
-
-	log.Printf(
-		"extension work context saved: session_id=%d user_id=%d company_id=%d project_id=%d match_status=%s",
-		response.SessionID,
-		authUserID,
-		companyID,
-		response.ProjectID,
-		response.MatchStatus,
-	)
 
 	c.JSON(
 		http.StatusOK,
@@ -165,13 +95,13 @@ func (h *Handler) WorkContext(
 }
 
 // Heartbeat godoc
-// @Summary 拡張機能Heartbeat送信
-// @Description 現在進行中の作業セッションの最終Heartbeat日時を更新します。
+// @Summary 作業セッションのハートビート
+// @Description 現在の作業セッションが継続中であることを通知します。
 // @Tags extension
 // @Accept json
 // @Produce json
 // @Security ExtensionTokenAuth
-// @Param request body HeartbeatRequest true "Heartbeat情報"
+// @Param request body HeartbeatRequest true "ハートビート"
 // @Success 200 {object} HeartbeatResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
@@ -181,30 +111,32 @@ func (h *Handler) WorkContext(
 func (h *Handler) Heartbeat(
 	c *gin.Context,
 ) {
-	authUserID := c.GetUint64(
+	var request HeartbeatRequest
+
+	if err := c.ShouldBindJSON(
+		&request,
+	); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			ErrorResponse{
+				Message: "入力内容が正しくありません。",
+			},
+		)
+		return
+	}
+
+	userID := c.GetUint64(
 		middleware.ContextUserIDKey,
 	)
 	companyID := c.GetUint64(
 		middleware.ContextCompanyIDKey,
 	)
 
-	if authUserID == 0 || companyID == 0 {
+	if userID == 0 || companyID == 0 {
 		c.JSON(
 			http.StatusUnauthorized,
 			ErrorResponse{
-				Message: "拡張機能トークンが無効です。",
-			},
-		)
-		return
-	}
-
-	var request HeartbeatRequest
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			ErrorResponse{
-				Message: "Heartbeat情報を正しく入力してください。",
+				Message: "拡張機能の認証情報が無効です。",
 			},
 		)
 		return
@@ -212,59 +144,20 @@ func (h *Handler) Heartbeat(
 
 	response, err := h.service.Heartbeat(
 		c.Request.Context(),
-		authUserID,
+		userID,
+		companyID,
 		request,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(
+		h.handleError(
+			c,
 			err,
-			ErrInvalidOccurredAt,
-		):
-			c.JSON(
-				http.StatusBadRequest,
-				ErrorResponse{
-					Message: "Heartbeat日時が正しくありません。",
-				},
-			)
-			return
-
-		case errors.Is(
-			err,
-			ErrActiveSessionNotFound,
-		):
-			c.JSON(
-				http.StatusNotFound,
-				ErrorResponse{
-					Message: "進行中の作業セッションが存在しません。",
-				},
-			)
-			return
-
-		default:
-			log.Printf(
-				"failed to update extension heartbeat: user_id=%d company_id=%d error=%v",
-				authUserID,
-				companyID,
-				err,
-			)
-
-			c.JSON(
-				http.StatusInternalServerError,
-				ErrorResponse{
-					Message: "Heartbeatの更新に失敗しました。",
-				},
-			)
-			return
-		}
+			"failed to update extension heartbeat",
+			userID,
+			companyID,
+		)
+		return
 	}
-
-	log.Printf(
-		"extension heartbeat updated: session_id=%d user_id=%d company_id=%d",
-		response.SessionID,
-		authUserID,
-		companyID,
-	)
 
 	c.JSON(
 		http.StatusOK,
@@ -273,13 +166,13 @@ func (h *Handler) Heartbeat(
 }
 
 // Disconnect godoc
-// @Summary 拡張機能終了通知
-// @Description VS Code終了時などに現在進行中の作業セッションを終了します。既に終了済みの場合も正常終了とします。
+// @Summary 作業セッション終了
+// @Description VSCode拡張機能の終了時に、現在の作業セッションを終了します。
 // @Tags extension
 // @Accept json
 // @Produce json
 // @Security ExtensionTokenAuth
-// @Param request body DisconnectRequest true "終了通知情報"
+// @Param request body DisconnectRequest true "切断情報"
 // @Success 200 {object} DisconnectResponse
 // @Success 204
 // @Failure 400 {object} ErrorResponse
@@ -289,30 +182,32 @@ func (h *Handler) Heartbeat(
 func (h *Handler) Disconnect(
 	c *gin.Context,
 ) {
-	authUserID := c.GetUint64(
+	var request DisconnectRequest
+
+	if err := c.ShouldBindJSON(
+		&request,
+	); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			ErrorResponse{
+				Message: "入力内容が正しくありません。",
+			},
+		)
+		return
+	}
+
+	userID := c.GetUint64(
 		middleware.ContextUserIDKey,
 	)
 	companyID := c.GetUint64(
 		middleware.ContextCompanyIDKey,
 	)
 
-	if authUserID == 0 || companyID == 0 {
+	if userID == 0 || companyID == 0 {
 		c.JSON(
 			http.StatusUnauthorized,
 			ErrorResponse{
-				Message: "拡張機能トークンが無効です。",
-			},
-		)
-		return
-	}
-
-	var request DisconnectRequest
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			ErrorResponse{
-				Message: "終了通知情報を正しく入力してください。",
+				Message: "拡張機能の認証情報が無効です。",
 			},
 		)
 		return
@@ -320,42 +215,21 @@ func (h *Handler) Disconnect(
 
 	response, err := h.service.Disconnect(
 		c.Request.Context(),
-		authUserID,
+		userID,
+		companyID,
 		request,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(
+		h.handleError(
+			c,
 			err,
-			ErrInvalidOccurredAt,
-		):
-			c.JSON(
-				http.StatusBadRequest,
-				ErrorResponse{
-					Message: "終了日時が正しくありません。",
-				},
-			)
-			return
-
-		default:
-			log.Printf(
-				"failed to disconnect extension session: user_id=%d company_id=%d error=%v",
-				authUserID,
-				companyID,
-				err,
-			)
-
-			c.JSON(
-				http.StatusInternalServerError,
-				ErrorResponse{
-					Message: "作業セッションの終了に失敗しました。",
-				},
-			)
-			return
-		}
+			"failed to disconnect extension session",
+			userID,
+			companyID,
+		)
+		return
 	}
 
-	// 進行中のセッションが存在しない場合も冪等な成功とする。
 	if response == nil {
 		c.Status(
 			http.StatusNoContent,
@@ -363,15 +237,89 @@ func (h *Handler) Disconnect(
 		return
 	}
 
-	log.Printf(
-		"extension session disconnected: session_id=%d user_id=%d company_id=%d",
-		response.SessionID,
-		authUserID,
-		companyID,
-	)
-
 	c.JSON(
 		http.StatusOK,
 		response,
 	)
+}
+
+func (h *Handler) handleError(
+	c *gin.Context,
+	err error,
+	logMessage string,
+	userID uint64,
+	companyID uint64,
+) {
+	switch {
+	case errors.Is(
+		err,
+		ErrInvalidRepositoryURL,
+	):
+		c.JSON(
+			http.StatusBadRequest,
+			ErrorResponse{
+				Message: "リポジトリURLが正しくありません。",
+			},
+		)
+
+	case errors.Is(
+		err,
+		ErrInvalidOccurredAt,
+	):
+		c.JSON(
+			http.StatusBadRequest,
+			ErrorResponse{
+				Message: "発生日時が正しくありません。",
+			},
+		)
+
+	case errors.Is(
+		err,
+		ErrRepositoryNotFound,
+	):
+		c.JSON(
+			http.StatusNotFound,
+			ErrorResponse{
+				Message: "登録済みリポジトリが見つかりません。",
+			},
+		)
+
+	case errors.Is(
+		err,
+		ErrExtensionProjectAccessDenied,
+	):
+		c.JSON(
+			http.StatusForbidden,
+			ErrorResponse{
+				Message: "対象プロジェクトへアクセスする権限がありません。",
+			},
+		)
+
+	case errors.Is(
+		err,
+		ErrActiveSessionNotFound,
+	):
+		c.JSON(
+			http.StatusNotFound,
+			ErrorResponse{
+				Message: "有効な作業セッションが見つかりません。",
+			},
+		)
+
+	default:
+		log.Printf(
+			"%s: user_id=%d company_id=%d error=%v",
+			logMessage,
+			userID,
+			companyID,
+			err,
+		)
+
+		c.JSON(
+			http.StatusInternalServerError,
+			ErrorResponse{
+				Message: "サーバー内部でエラーが発生しました。",
+			},
+		)
+	}
 }

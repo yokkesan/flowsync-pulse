@@ -3,7 +3,7 @@ package extension
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
 	"net/url"
 	"path"
 	"strings"
@@ -67,13 +67,20 @@ type repositoryInterface interface {
 
 type Service struct {
 	repository repositoryInterface
+	notifier   WorkContextNotifier
 }
 
 func NewService(
 	repository repositoryInterface,
+	notifier WorkContextNotifier,
 ) *Service {
+	if notifier == nil {
+		notifier = NewNoopWorkContextNotifier()
+	}
+
 	return &Service{
 		repository: repository,
+		notifier:   notifier,
 	}
 }
 
@@ -183,7 +190,7 @@ func (s *Service) WorkContext(
 		return WorkContextResponse{}, err
 	}
 
-	return WorkContextResponse{
+	response := WorkContextResponse{
 		SessionID:        session.SessionID,
 		ProjectID:        repository.ProjectID,
 		ProjectName:      repository.ProjectName,
@@ -201,12 +208,55 @@ func (s *Service) WorkContext(
 		StartedAt:        session.StartedAt,
 		LastHeartbeatAt:  session.LastHeartbeatAt,
 		EndedAt:          session.EndedAt,
-	}, nil
+	}
+
+	projectID := repository.ProjectID
+	projectName := repository.ProjectName
+	sessionStatus := session.Status
+	startedAt := session.StartedAt
+	lastHeartbeatAt := session.LastHeartbeatAt
+	repositoryNameValue := repositoryName
+	branchNameValue := branchName
+	matchStatusValue := matchStatus
+
+	if err := s.notifier.NotifyWorkContextChanged(
+		ctx,
+		companyID,
+		WorkContextNotification{
+			UserID:          userID,
+			ProjectID:       &projectID,
+			ProjectName:     &projectName,
+			TaskID:          taskID,
+			TaskKey:         taskKey,
+			TaskName:        taskName,
+			RepositoryName:  &repositoryNameValue,
+			BranchName:      &branchNameValue,
+			TicketKey:       ticketKey,
+			WorkspaceName:   workspaceName,
+			MatchStatus:     &matchStatusValue,
+			SessionStatus:   &sessionStatus,
+			ExtensionActive: true,
+			StartedAt:       &startedAt,
+			LastHeartbeatAt: &lastHeartbeatAt,
+			EndedAt:         session.EndedAt,
+			EndReason:       nil,
+		},
+	); err != nil {
+		log.Printf(
+			"failed to notify realtime work context change: user_id=%d company_id=%d error=%v",
+			userID,
+			companyID,
+			err,
+		)
+	}
+
+	return response, nil
 }
 
 func (s *Service) Heartbeat(
 	ctx context.Context,
 	userID uint64,
+	companyID uint64,
 	request HeartbeatRequest,
 ) (HeartbeatResponse, error) {
 	occurredAt, err := normalizeOccurredAt(
@@ -225,16 +275,40 @@ func (s *Service) Heartbeat(
 		return HeartbeatResponse{}, err
 	}
 
-	return HeartbeatResponse{
+	response := HeartbeatResponse{
 		SessionID:       result.SessionID,
 		Status:          result.Status,
 		LastHeartbeatAt: result.LastHeartbeatAt,
-	}, nil
+	}
+
+	sessionStatus := result.Status
+	lastHeartbeatAt := result.LastHeartbeatAt
+
+	if err := s.notifier.NotifyWorkContextChanged(
+		ctx,
+		companyID,
+		WorkContextNotification{
+			UserID:          userID,
+			SessionStatus:   &sessionStatus,
+			ExtensionActive: true,
+			LastHeartbeatAt: &lastHeartbeatAt,
+		},
+	); err != nil {
+		log.Printf(
+			"failed to notify realtime heartbeat change: user_id=%d company_id=%d error=%v",
+			userID,
+			companyID,
+			err,
+		)
+	}
+
+	return response, nil
 }
 
 func (s *Service) Disconnect(
 	ctx context.Context,
 	userID uint64,
+	companyID uint64,
 	request DisconnectRequest,
 ) (*DisconnectResponse, error) {
 	occurredAt, err := normalizeOccurredAt(
@@ -260,13 +334,35 @@ func (s *Service) Disconnect(
 
 	endReason := result.EndReason
 	endedAt := result.EndedAt
+	sessionStatus := result.Status
 
-	return &DisconnectResponse{
+	response := &DisconnectResponse{
 		SessionID: result.SessionID,
 		Status:    result.Status,
 		EndReason: &endReason,
 		EndedAt:   &endedAt,
-	}, nil
+	}
+
+	if err := s.notifier.NotifyWorkContextChanged(
+		ctx,
+		companyID,
+		WorkContextNotification{
+			UserID:          userID,
+			SessionStatus:   &sessionStatus,
+			ExtensionActive: false,
+			EndedAt:         &endedAt,
+			EndReason:       &endReason,
+		},
+	); err != nil {
+		log.Printf(
+			"failed to notify realtime disconnect change: user_id=%d company_id=%d error=%v",
+			userID,
+			companyID,
+			err,
+		)
+	}
+
+	return response, nil
 }
 
 func (s *Service) findRepository(
@@ -331,7 +427,6 @@ func (s *Service) resolveTaskMatch(
 				nil
 		}
 
-		// チケットキーがない場合は正式なタスク一致とは扱わない。
 		return nil,
 			MatchStatusTicketNotFound,
 			nil
@@ -410,11 +505,7 @@ func normalizeRepositoryURL(
 		normalizedValue,
 	)
 	if err != nil {
-		return "", fmt.Errorf(
-			"%w: %v",
-			ErrInvalidRepositoryURL,
-			err,
-		)
+		return "", ErrInvalidRepositoryURL
 	}
 
 	switch parsedURL.Scheme {
