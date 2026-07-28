@@ -205,6 +205,42 @@ func (r *Repository) ProjectKeyExists(
 	return exists, nil
 }
 
+func (r *Repository) RepositoryURLExists(
+	ctx context.Context,
+	companyID uint64,
+	repositoryURL string,
+	excludeProjectID uint64,
+) (bool, error) {
+	var exists bool
+
+	err := r.db.QueryRowContext(
+		ctx,
+		`
+			SELECT EXISTS (
+				SELECT 1
+				FROM repositories repo
+				INNER JOIN projects p
+					ON p.id = repo.project_id
+				WHERE p.company_id = ?
+				  AND repo.remote_url = ?
+				  AND (? = 0 OR p.id <> ?)
+			)
+		`,
+		companyID,
+		repositoryURL,
+		excludeProjectID,
+		excludeProjectID,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check repository url: %w",
+			err,
+		)
+	}
+
+	return exists, nil
+}
+
 func (r *Repository) Create(
 	ctx context.Context,
 	params CreateParams,
@@ -534,13 +570,13 @@ func (r *Repository) Update(
 		if err := tx.QueryRowContext(
 			ctx,
 			`
-			SELECT EXISTS (
-				SELECT 1
-				FROM projects
-				WHERE id = ?
-				  AND company_id = ?
-			)
-		`,
+				SELECT EXISTS (
+					SELECT 1
+					FROM projects
+					WHERE id = ?
+					  AND company_id = ?
+				)
+			`,
 			params.ProjectID,
 			params.CompanyID,
 		).Scan(&exists); err != nil {

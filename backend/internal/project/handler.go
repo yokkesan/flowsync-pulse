@@ -97,6 +97,12 @@ func (h *Handler) Create(c *gin.Context) {
 			})
 			return
 
+		case errors.Is(err, ErrRepositoryAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Message: "このリポジトリは、同じ会社の別プロジェクトで既に使用されています。",
+			})
+			return
+
 		case errors.Is(err, ErrInvalidProjectDateRange):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "終了日は開始日以降の日付を指定してください。",
@@ -370,6 +376,12 @@ func (h *Handler) Update(c *gin.Context) {
 		case errors.Is(err, ErrInvalidRepositoryURL):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "リポジトリURLを正しく入力してください。",
+			})
+			return
+
+		case errors.Is(err, ErrRepositoryAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Message: "このリポジトリは、同じ会社の別プロジェクトで既に使用されています。",
 			})
 			return
 

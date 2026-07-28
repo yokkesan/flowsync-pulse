@@ -17,6 +17,9 @@ var (
 	ErrProjectKeyCannotBeChanged = errors.New("project key cannot be changed")
 	ErrInvalidProjectDateRange   = errors.New("invalid project date range")
 	ErrInvalidRepositoryURL      = errors.New("invalid repository url")
+	ErrRepositoryAlreadyExists   = errors.New(
+		"repository already exists in company",
+	)
 )
 
 var projectKeyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{1,9}$`)
@@ -46,6 +49,13 @@ type repositoryInterface interface {
 		ctx context.Context,
 		companyID uint64,
 		projectKey string,
+		excludeProjectID uint64,
+	) (bool, error)
+
+	RepositoryURLExists(
+		ctx context.Context,
+		companyID uint64,
+		repositoryURL string,
 		excludeProjectID uint64,
 	) (bool, error)
 
@@ -149,6 +159,20 @@ func (s *Service) Create(
 
 	if repositoryURL == "" {
 		return nil, ErrInvalidRepositoryURL
+	}
+
+	repositoryURLExists, err := s.repository.RepositoryURLExists(
+		ctx,
+		companyID,
+		repositoryURL,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if repositoryURLExists {
+		return nil, ErrRepositoryAlreadyExists
 	}
 
 	if !isValidDateRange(request.StartDate, request.EndDate) {
@@ -297,6 +321,20 @@ func (s *Service) Update(
 
 	if repositoryURL == "" {
 		return nil, ErrInvalidRepositoryURL
+	}
+
+	repositoryURLExists, err := s.repository.RepositoryURLExists(
+		ctx,
+		companyID,
+		repositoryURL,
+		projectID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if repositoryURLExists {
+		return nil, ErrRepositoryAlreadyExists
 	}
 
 	if !isValidDateRange(request.StartDate, request.EndDate) {
