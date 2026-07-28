@@ -164,11 +164,6 @@ export function AllTaskListPage() {
                     .toLowerCase()
                     .includes(
                         normalizedKeyword,
-                    ) ||
-                task.branch_name
-                    .toLowerCase()
-                    .includes(
-                        normalizedKeyword,
                     );
 
             const matchesProject =

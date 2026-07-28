@@ -64,10 +64,6 @@ export function TaskTable({
                             </th>
 
                             <th scope="col">
-                                ブランチ
-                            </th>
-
-                            <th scope="col">
                                 期限
                             </th>
                         </tr>
@@ -78,7 +74,7 @@ export function TaskTable({
                             <tr>
                                 <td
                                     className="task-table__empty"
-                                    colSpan={7}
+                                    colSpan={6}
                                 >
                                     条件に一致するタスクはありません。
                                 </td>
@@ -160,14 +156,6 @@ export function TaskTable({
                                                 task.priority
                                             }
                                         />
-                                    </td>
-
-                                    <td>
-                                        <code className="task-table__branch">
-                                            {
-                                                task.branch_name
-                                            }
-                                        </code>
                                     </td>
 
                                     <td>

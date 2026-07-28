@@ -143,11 +143,6 @@ export function TaskListPage() {
                     .toLowerCase()
                     .includes(
                         normalizedKeyword,
-                    ) ||
-                task.branch_name
-                    .toLowerCase()
-                    .includes(
-                        normalizedKeyword,
                     );
 
             const matchesStatus =

@@ -85,6 +85,8 @@ export function ProjectEditPage() {
                 return {
                     name: project.name,
                     slug: project.slug,
+                    repositoryUrl:
+                        project.repository_url ?? '',
                     description:
                         project.description ?? '',
                     status: project.status,

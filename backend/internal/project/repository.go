@@ -16,16 +16,17 @@ type Repository struct {
 }
 
 type CreateParams struct {
-	CompanyID   uint64
-	CreatedByID uint64
-	Name        string
-	Slug        string
-	ProjectKey  string
-	Description *string
-	Status      string
-	StartDate   *string
-	EndDate     *string
-	MemberIDs   []uint64
+	CompanyID     uint64
+	CreatedByID   uint64
+	Name          string
+	Slug          string
+	ProjectKey    string
+	RepositoryURL string
+	Description   *string
+	Status        string
+	StartDate     *string
+	EndDate       *string
+	MemberIDs     []uint64
 }
 
 type CreateResult struct {
@@ -33,17 +34,18 @@ type CreateResult struct {
 }
 
 type UpdateParams struct {
-	ProjectID   uint64
-	CompanyID   uint64
-	UpdatedByID uint64
-	Name        string
-	Slug        string
-	ProjectKey  *string
-	Description *string
-	Status      string
-	StartDate   *string
-	EndDate     *string
-	MemberIDs   []uint64
+	ProjectID     uint64
+	CompanyID     uint64
+	UpdatedByID   uint64
+	Name          string
+	Slug          string
+	ProjectKey    *string
+	RepositoryURL string
+	Description   *string
+	Status        string
+	StartDate     *string
+	EndDate       *string
+	MemberIDs     []uint64
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -278,6 +280,26 @@ func (r *Repository) Create(
 		return nil, err
 	}
 
+	if _, err := tx.ExecContext(
+		ctx,
+		`
+			INSERT INTO repositories (
+				project_id,
+				name,
+				remote_url
+			)
+			VALUES (?, ?, ?)
+		`,
+		uint64(projectID),
+		extractRepositoryName(params.RepositoryURL),
+		params.RepositoryURL,
+	); err != nil {
+		return nil, fmt.Errorf(
+			"failed to create project repository: %w",
+			err,
+		)
+	}
+
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf(
 			"failed to commit project creation transaction: %w",
@@ -304,6 +326,7 @@ func (r *Repository) FindAllByUser(
 				p.name,
 				p.slug,
 				p.project_key,
+				MAX(repo.remote_url) AS repository_url,
 				p.description,
 				p.status,
 				p.started_at,
@@ -316,6 +339,9 @@ func (r *Repository) FindAllByUser(
 				ON current_member.project_id = p.id
 				AND current_member.user_id = ?
 				AND current_member.status = 'active'
+			LEFT JOIN repositories repo
+				ON repo.project_id = p.id
+				AND repo.status = 'active'
 			LEFT JOIN tasks t
 				ON t.project_id = p.id
 			WHERE p.company_id = ?
@@ -385,6 +411,7 @@ func (r *Repository) FindByID(
 				p.name,
 				p.slug,
 				p.project_key,
+				MAX(repo.remote_url) AS repository_url,
 				p.description,
 				p.status,
 				p.started_at,
@@ -393,6 +420,9 @@ func (r *Repository) FindByID(
 				p.created_at,
 				p.updated_at
 			FROM projects p
+			LEFT JOIN repositories repo
+				ON repo.project_id = p.id
+				AND repo.status = 'active'
 			LEFT JOIN tasks t
 				ON t.project_id = p.id
 			WHERE p.id = ?
@@ -499,7 +529,30 @@ func (r *Repository) Update(
 	}
 
 	if affectedRows == 0 {
-		return ErrProjectNotFound
+		var exists bool
+
+		if err := tx.QueryRowContext(
+			ctx,
+			`
+			SELECT EXISTS (
+				SELECT 1
+				FROM projects
+				WHERE id = ?
+				  AND company_id = ?
+			)
+		`,
+			params.ProjectID,
+			params.CompanyID,
+		).Scan(&exists); err != nil {
+			return fmt.Errorf(
+				"failed to check updated project existence: %w",
+				err,
+			)
+		}
+
+		if !exists {
+			return ErrProjectNotFound
+		}
 	}
 
 	if params.ProjectKey != nil {
@@ -519,6 +572,15 @@ func (r *Repository) Update(
 				err,
 			)
 		}
+	}
+
+	if err := upsertProjectRepository(
+		ctx,
+		tx,
+		params.ProjectID,
+		params.RepositoryURL,
+	); err != nil {
+		return err
 	}
 
 	if _, err := tx.ExecContext(
@@ -696,6 +758,82 @@ func insertProjectMembers(
 	return nil
 }
 
+func upsertProjectRepository(
+	ctx context.Context,
+	tx *sql.Tx,
+	projectID uint64,
+	repositoryURL string,
+) error {
+	var repositoryID uint64
+
+	err := tx.QueryRowContext(
+		ctx,
+		`
+			SELECT id
+			FROM repositories
+			WHERE project_id = ?
+			  AND status = 'active'
+			ORDER BY id
+			LIMIT 1
+			FOR UPDATE
+		`,
+		projectID,
+	).Scan(&repositoryID)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		if _, err := tx.ExecContext(
+			ctx,
+			`
+				INSERT INTO repositories (
+					project_id,
+					name,
+					remote_url
+				)
+				VALUES (?, ?, ?)
+			`,
+			projectID,
+			extractRepositoryName(repositoryURL),
+			repositoryURL,
+		); err != nil {
+			return fmt.Errorf(
+				"failed to create project repository: %w",
+				err,
+			)
+		}
+
+	case err != nil:
+		return fmt.Errorf(
+			"failed to find project repository: %w",
+			err,
+		)
+
+	default:
+		if _, err := tx.ExecContext(
+			ctx,
+			`
+				UPDATE repositories
+				SET
+					name = ?,
+					remote_url = ?
+				WHERE id = ?
+				  AND project_id = ?
+			`,
+			extractRepositoryName(repositoryURL),
+			repositoryURL,
+			repositoryID,
+			projectID,
+		); err != nil {
+			return fmt.Errorf(
+				"failed to update project repository: %w",
+				err,
+			)
+		}
+	}
+
+	return nil
+}
+
 type rowScanner interface {
 	Scan(dest ...any) error
 }
@@ -703,6 +841,7 @@ type rowScanner interface {
 func scanProject(scanner rowScanner) (Response, error) {
 	var project Response
 	var projectKey sql.NullString
+	var repositoryURL sql.NullString
 	var description sql.NullString
 	var startedAt sql.NullTime
 	var endedAt sql.NullTime
@@ -713,6 +852,7 @@ func scanProject(scanner rowScanner) (Response, error) {
 		&project.Name,
 		&project.Slug,
 		&projectKey,
+		&repositoryURL,
 		&description,
 		&project.Status,
 		&startedAt,
@@ -725,6 +865,7 @@ func scanProject(scanner rowScanner) (Response, error) {
 	}
 
 	project.ProjectKey = nullableStringPointer(projectKey)
+	project.RepositoryURL = nullableStringPointer(repositoryURL)
 	project.Description = nullableStringPointer(description)
 	project.StartDate = nullableDateString(startedAt)
 	project.EndDate = nullableDateString(endedAt)
@@ -770,4 +911,21 @@ func nullableStringPointer(value sql.NullString) *string {
 	}
 
 	return &value.String
+}
+
+func extractRepositoryName(repositoryURL string) string {
+	normalizedURL := strings.TrimSpace(repositoryURL)
+	normalizedURL = strings.TrimSuffix(normalizedURL, "/")
+	normalizedURL = strings.TrimSuffix(normalizedURL, ".git")
+
+	separatorIndex := strings.LastIndexAny(normalizedURL, "/:")
+	if separatorIndex >= 0 {
+		normalizedURL = normalizedURL[separatorIndex+1:]
+	}
+
+	if normalizedURL == "" {
+		return "repository"
+	}
+
+	return normalizedURL
 }

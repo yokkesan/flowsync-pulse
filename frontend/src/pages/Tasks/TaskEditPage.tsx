@@ -96,8 +96,6 @@ export function TaskEditPage() {
                     assigneeUserId: String(
                         task.assignee_user_id,
                     ),
-                    branchName:
-                        task.branch_name,
                     status: task.status,
                     priority: task.priority,
                     startDate:

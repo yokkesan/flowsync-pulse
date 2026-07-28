@@ -29,10 +29,9 @@ type RepositoryCandidate struct {
 }
 
 type TaskMatch struct {
-	TaskID     uint64
-	TaskKey    string
-	TaskName   string
-	BranchName string
+	TaskID   uint64
+	TaskKey  string
+	TaskName string
 }
 
 type StartSessionParams struct {
@@ -198,11 +197,8 @@ func (r *Repository) FindTaskByKey(
 			SELECT
 				t.id,
 				t.task_key,
-				t.name,
-				tb.branch_name
+				t.name
 			FROM tasks t
-			INNER JOIN task_branches tb
-				ON tb.task_id = t.id
 			WHERE t.project_id = ?
 			  AND t.task_key = ?
 			LIMIT 1
@@ -213,7 +209,6 @@ func (r *Repository) FindTaskByKey(
 		&task.TaskID,
 		&task.TaskKey,
 		&task.TaskName,
-		&task.BranchName,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -222,50 +217,6 @@ func (r *Repository) FindTaskByKey(
 
 		return nil, fmt.Errorf(
 			"failed to find task by key: %w",
-			err,
-		)
-	}
-
-	return &task, nil
-}
-
-func (r *Repository) FindTaskByBranch(
-	ctx context.Context,
-	projectID uint64,
-	branchName string,
-) (*TaskMatch, error) {
-	var task TaskMatch
-
-	err := r.db.QueryRowContext(
-		ctx,
-		`
-			SELECT
-				t.id,
-				t.task_key,
-				t.name,
-				tb.branch_name
-			FROM task_branches tb
-			INNER JOIN tasks t
-				ON t.id = tb.task_id
-			WHERE t.project_id = ?
-			  AND tb.branch_name = ?
-			LIMIT 1
-		`,
-		projectID,
-		branchName,
-	).Scan(
-		&task.TaskID,
-		&task.TaskKey,
-		&task.TaskName,
-		&task.BranchName,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf(
-			"failed to find task by branch: %w",
 			err,
 		)
 	}

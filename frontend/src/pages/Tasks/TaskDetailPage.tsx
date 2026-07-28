@@ -267,10 +267,6 @@ export function TaskDetailPage() {
                                             }
                                         />
                                     </div>
-
-                                    <code className="task-detail-page__branch">
-                                        {task.branch_name}
-                                    </code>
                                 </div>
 
                                 <div className="task-detail-page__actions">
