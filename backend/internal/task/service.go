@@ -14,9 +14,6 @@ var (
 	ErrAssigneeNotProjectMember = errors.New(
 		"assignee is not an active project member",
 	)
-	ErrBranchAlreadyExists = errors.New(
-		"branch already exists in project",
-	)
 	ErrInvalidDateRange = errors.New(
 		"due date must not be earlier than start date",
 	)
@@ -37,13 +34,6 @@ type TaskCreator interface {
 		ctx context.Context,
 		projectID uint64,
 		userID uint64,
-	) (bool, error)
-
-	BranchExistsInProject(
-		ctx context.Context,
-		projectID uint64,
-		branchName string,
-		excludeTaskID uint64,
 	) (bool, error)
 
 	Create(
@@ -123,21 +113,6 @@ func (s *Service) Create(
 	}
 
 	name := strings.TrimSpace(request.Name)
-	branchName := strings.TrimSpace(request.BranchName)
-
-	branchExists, err := s.repository.BranchExistsInProject(
-		ctx,
-		projectID,
-		branchName,
-		0,
-	)
-	if err != nil {
-		return Response{}, err
-	}
-
-	if branchExists {
-		return Response{}, ErrBranchAlreadyExists
-	}
 
 	if err := validateDateRange(
 		request.StartDate,
@@ -164,7 +139,6 @@ func (s *Service) Create(
 			Name:           name,
 			Description:    description,
 			AssigneeUserID: request.AssigneeUserID,
-			BranchName:     branchName,
 			Status:         request.Status,
 			Priority:       request.Priority,
 			StartDate:      request.StartDate,
@@ -305,21 +279,6 @@ func (s *Service) Update(
 	}
 
 	name := strings.TrimSpace(request.Name)
-	branchName := strings.TrimSpace(request.BranchName)
-
-	branchExists, err := s.repository.BranchExistsInProject(
-		ctx,
-		projectID,
-		branchName,
-		taskID,
-	)
-	if err != nil {
-		return Response{}, err
-	}
-
-	if branchExists {
-		return Response{}, ErrBranchAlreadyExists
-	}
 
 	if err := validateDateRange(
 		request.StartDate,
@@ -351,7 +310,6 @@ func (s *Service) Update(
 			Name:           name,
 			Description:    description,
 			AssigneeUserID: request.AssigneeUserID,
-			BranchName:     branchName,
 			Status:         request.Status,
 			Priority:       request.Priority,
 			StartDate:      request.StartDate,

@@ -23,7 +23,7 @@ func NewHandler(service *Service) *Handler {
 
 // Create godoc
 // @Summary タスク登録
-// @Description 対象プロジェクトに新しいタスクとブランチ情報を登録します。
+// @Description 対象プロジェクトに新しいタスクを登録します。
 // @Tags tasks
 // @Accept json
 // @Produce json
@@ -34,7 +34,6 @@ func NewHandler(service *Service) *Handler {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 403 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /api/projects/{projectId}/tasks [post]
 func (h *Handler) Create(c *gin.Context) {
@@ -98,12 +97,6 @@ func (h *Handler) Create(c *gin.Context) {
 		case errors.Is(err, ErrAssigneeNotProjectMember):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "担当メンバーが対象プロジェクトに所属していません。",
-			})
-			return
-
-		case errors.Is(err, ErrBranchAlreadyExists):
-			c.JSON(http.StatusConflict, ErrorResponse{
-				Message: "このブランチ名は対象プロジェクトで既に使用されています。",
 			})
 			return
 
@@ -329,7 +322,7 @@ func (h *Handler) Get(c *gin.Context) {
 
 // Update godoc
 // @Summary タスク編集
-// @Description 対象プロジェクトに登録されているタスク情報とブランチ情報を編集します。
+// @Description 対象プロジェクトに登録されているタスク情報を編集します。
 // @Tags tasks
 // @Accept json
 // @Produce json
@@ -342,7 +335,6 @@ func (h *Handler) Get(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Failure 403 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
-// @Failure 409 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /api/projects/{projectId}/tasks/{taskId} [put]
 func (h *Handler) Update(c *gin.Context) {
@@ -426,12 +418,6 @@ func (h *Handler) Update(c *gin.Context) {
 		case errors.Is(err, ErrAssigneeNotProjectMember):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Message: "担当メンバーが対象プロジェクトに所属していません。",
-			})
-			return
-
-		case errors.Is(err, ErrBranchAlreadyExists):
-			c.JSON(http.StatusConflict, ErrorResponse{
-				Message: "このブランチ名は対象プロジェクトで既に使用されています。",
 			})
 			return
 

@@ -14,6 +14,7 @@ import type { CompanyUser } from '../../types/user';
 export type ProjectFormValues = {
     name: string;
     slug: string;
+    repositoryUrl: string;
     description: string;
     status: ProjectStatus;
     startDate: string;
@@ -38,6 +39,7 @@ type ProjectFormProps = {
 const defaultValues: ProjectFormValues = {
     name: '',
     slug: '',
+    repositoryUrl: '',
     description: '',
     status: 'planned',
     startDate: '',
@@ -111,6 +113,8 @@ export function ProjectForm({
 
         const name = values.name.trim();
         const slug = values.slug.trim();
+        const repositoryUrl =
+            values.repositoryUrl.trim();
 
         if (name.length < 2) {
             setValidationMessage(
@@ -122,6 +126,20 @@ export function ProjectForm({
         if (slug.length < 2) {
             setValidationMessage(
                 'スラッグは2文字以上で入力してください。',
+            );
+            return;
+        }
+
+        if (!repositoryUrl) {
+            setValidationMessage(
+                'リポジトリURLを入力してください。',
+            );
+            return;
+        }
+
+        if (repositoryUrl.length > 500) {
+            setValidationMessage(
+                'リポジトリURLは500文字以内で入力してください。',
             );
             return;
         }
@@ -147,6 +165,7 @@ export function ProjectForm({
         await onSubmit({
             name,
             slug,
+            repository_url: repositoryUrl,
             description: normalizeNullableValue(
                 values.description,
             ),
@@ -240,6 +259,42 @@ export function ProjectForm({
 
                         <span className="project-form__help">
                             半角英数字とハイフンの使用を推奨します。
+                        </span>
+                    </label>
+
+                    <label className="project-form__field">
+                        <span className="project-form__label">
+                            リポジトリURL
+                            <span aria-hidden="true">
+                                *
+                            </span>
+                        </span>
+
+                        <input
+                            className="project-form__input"
+                            type="text"
+                            required
+                            maxLength={500}
+                            placeholder="https://github.com/example/repository.git"
+                            value={
+                                values.repositoryUrl
+                            }
+                            onChange={(event) => {
+                                setValues(
+                                    (
+                                        currentValues,
+                                    ) => ({
+                                        ...currentValues,
+                                        repositoryUrl:
+                                            event.target
+                                                .value,
+                                    }),
+                                );
+                            }}
+                        />
+
+                        <span className="project-form__help">
+                            VS Code拡張機能が取得するリポジトリURLと照合します。
                         </span>
                     </label>
 

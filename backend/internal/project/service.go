@@ -16,6 +16,7 @@ var (
 	ErrInvalidProjectKey         = errors.New("invalid project key")
 	ErrProjectKeyCannotBeChanged = errors.New("project key cannot be changed")
 	ErrInvalidProjectDateRange   = errors.New("invalid project date range")
+	ErrInvalidRepositoryURL      = errors.New("invalid repository url")
 )
 
 var projectKeyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{1,9}$`)
@@ -124,7 +125,7 @@ func (s *Service) Create(
 		return nil, ErrProjectSlugAlreadyExists
 	}
 
-	projectKey := normalizeProjectKey(request.ProjectKey)
+	projectKey := generateProjectKeyFromSlug(slug)
 
 	if !isValidProjectKey(projectKey) {
 		return nil, ErrInvalidProjectKey
@@ -144,6 +145,12 @@ func (s *Service) Create(
 		return nil, ErrProjectKeyAlreadyExists
 	}
 
+	repositoryURL := normalizeRepositoryURL(request.RepositoryURL)
+
+	if repositoryURL == "" {
+		return nil, ErrInvalidRepositoryURL
+	}
+
 	if !isValidDateRange(request.StartDate, request.EndDate) {
 		return nil, ErrInvalidProjectDateRange
 	}
@@ -151,16 +158,17 @@ func (s *Service) Create(
 	result, err := s.repository.Create(
 		ctx,
 		CreateParams{
-			CompanyID:   companyID,
-			CreatedByID: userID,
-			Name:        strings.TrimSpace(request.Name),
-			Slug:        slug,
-			ProjectKey:  projectKey,
-			Description: normalizeOptionalString(request.Description),
-			Status:      request.Status,
-			StartDate:   normalizeOptionalString(request.StartDate),
-			EndDate:     normalizeOptionalString(request.EndDate),
-			MemberIDs:   memberIDs,
+			CompanyID:     companyID,
+			CreatedByID:   userID,
+			Name:          strings.TrimSpace(request.Name),
+			Slug:          slug,
+			ProjectKey:    projectKey,
+			RepositoryURL: repositoryURL,
+			Description:   normalizeOptionalString(request.Description),
+			Status:        request.Status,
+			StartDate:     normalizeOptionalString(request.StartDate),
+			EndDate:       normalizeOptionalString(request.EndDate),
+			MemberIDs:     memberIDs,
 		},
 	)
 	if err != nil {
@@ -285,6 +293,12 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	repositoryURL := normalizeRepositoryURL(request.RepositoryURL)
+
+	if repositoryURL == "" {
+		return nil, ErrInvalidRepositoryURL
+	}
+
 	if !isValidDateRange(request.StartDate, request.EndDate) {
 		return nil, ErrInvalidProjectDateRange
 	}
@@ -292,17 +306,18 @@ func (s *Service) Update(
 	if err := s.repository.Update(
 		ctx,
 		UpdateParams{
-			ProjectID:   projectID,
-			CompanyID:   companyID,
-			UpdatedByID: userID,
-			Name:        strings.TrimSpace(request.Name),
-			Slug:        slug,
-			ProjectKey:  projectKey,
-			Description: normalizeOptionalString(request.Description),
-			Status:      request.Status,
-			StartDate:   normalizeOptionalString(request.StartDate),
-			EndDate:     normalizeOptionalString(request.EndDate),
-			MemberIDs:   memberIDs,
+			ProjectID:     projectID,
+			CompanyID:     companyID,
+			UpdatedByID:   userID,
+			Name:          strings.TrimSpace(request.Name),
+			Slug:          slug,
+			ProjectKey:    projectKey,
+			RepositoryURL: repositoryURL,
+			Description:   normalizeOptionalString(request.Description),
+			Status:        request.Status,
+			StartDate:     normalizeOptionalString(request.StartDate),
+			EndDate:       normalizeOptionalString(request.EndDate),
+			MemberIDs:     memberIDs,
 		},
 	); err != nil {
 		return nil, err
@@ -372,7 +387,6 @@ func (s *Service) resolveProjectKeyForUpdate(
 			return nil, ErrProjectKeyCannotBeChanged
 		}
 
-		// 既に同じキーが設定されているため、更新処理には渡さない。
 		return nil, nil
 	}
 
@@ -393,10 +407,44 @@ func (s *Service) resolveProjectKeyForUpdate(
 	return &normalizedProjectKey, nil
 }
 
+func generateProjectKeyFromSlug(slug string) string {
+	normalizedSlug := strings.ToUpper(
+		strings.TrimSpace(slug),
+	)
+
+	var builder strings.Builder
+
+	for _, character := range normalizedSlug {
+		isUppercaseLetter :=
+			character >= 'A' &&
+				character <= 'Z'
+
+		isNumber :=
+			character >= '0' &&
+				character <= '9'
+
+		if !isUppercaseLetter && !isNumber {
+			continue
+		}
+
+		builder.WriteRune(character)
+
+		if builder.Len() >= 10 {
+			break
+		}
+	}
+
+	return builder.String()
+}
+
 func normalizeProjectKey(projectKey string) string {
 	return strings.ToUpper(
 		strings.TrimSpace(projectKey),
 	)
+}
+
+func normalizeRepositoryURL(repositoryURL string) string {
+	return strings.TrimSpace(repositoryURL)
 }
 
 func isValidProjectKey(projectKey string) bool {

@@ -15,7 +15,6 @@ export type TaskFormValues = {
     name: string;
     description: string;
     assigneeUserId: string;
-    branchName: string;
     status: TaskStatus;
     priority: TaskPriority;
     startDate: string;
@@ -38,7 +37,6 @@ const defaultValues: TaskFormValues = {
     name: '',
     description: '',
     assigneeUserId: '',
-    branchName: '',
     status: 'not_started',
     priority: 'medium',
     startDate: '',
@@ -83,8 +81,6 @@ export function TaskForm({
         setValidationMessage('');
 
         const name = values.name.trim();
-        const branchName =
-            values.branchName.trim();
 
         const assigneeUserId = Number(
             values.assigneeUserId,
@@ -116,20 +112,6 @@ export function TaskForm({
             return;
         }
 
-        if (!branchName) {
-            setValidationMessage(
-                'ブランチ名を入力してください。',
-            );
-            return;
-        }
-
-        if (branchName.length > 255) {
-            setValidationMessage(
-                'ブランチ名は255文字以内で入力してください。',
-            );
-            return;
-        }
-
         if (
             values.startDate &&
             values.dueDate &&
@@ -150,7 +132,6 @@ export function TaskForm({
                 ),
             assignee_user_id:
                 assigneeUserId,
-            branch_name: branchName,
             status: values.status,
             priority: values.priority,
             start_date:
@@ -282,36 +263,6 @@ export function TaskForm({
                             </option>
                         ))}
                     </select>
-                </label>
-
-                <label className="task-form__field">
-                    <span className="task-form__label">
-                        ブランチ名
-                        <span aria-hidden="true">
-                            *
-                        </span>
-                    </span>
-
-                    <input
-                        className="task-form__input"
-                        type="text"
-                        required
-                        maxLength={255}
-                        placeholder="例: feature/task-management"
-                        value={values.branchName}
-                        onChange={(event) => {
-                            setValues(
-                                (
-                                    currentValues,
-                                ) => ({
-                                    ...currentValues,
-                                    branchName:
-                                        event.target
-                                            .value,
-                                }),
-                            );
-                        }}
-                    />
                 </label>
 
                 <div className="task-form__select-fields">

@@ -21,7 +21,6 @@ type CreateParams struct {
 	Name           string
 	Description    *string
 	AssigneeUserID uint64
-	BranchName     string
 	Status         string
 	Priority       string
 	StartDate      *string
@@ -39,7 +38,6 @@ type UpdateParams struct {
 	Name           string
 	Description    *string
 	AssigneeUserID uint64
-	BranchName     string
 	Status         string
 	Priority       string
 	StartDate      *string
@@ -118,42 +116,6 @@ func (r *Repository) IsActiveProjectMember(
 	if err != nil {
 		return false, fmt.Errorf(
 			"failed to check project member: %w",
-			err,
-		)
-	}
-
-	return exists, nil
-}
-
-func (r *Repository) BranchExistsInProject(
-	ctx context.Context,
-	projectID uint64,
-	branchName string,
-	excludeTaskID uint64,
-) (bool, error) {
-	var exists bool
-
-	err := r.db.QueryRowContext(
-		ctx,
-		`
-			SELECT EXISTS (
-				SELECT 1
-				FROM task_branches tb
-				INNER JOIN tasks t
-					ON t.id = tb.task_id
-				WHERE t.project_id = ?
-				  AND tb.branch_name = ?
-				  AND (? = 0 OR t.id <> ?)
-			)
-		`,
-		projectID,
-		branchName,
-		excludeTaskID,
-		excludeTaskID,
-	).Scan(&exists)
-	if err != nil {
-		return false, fmt.Errorf(
-			"failed to check branch duplication: %w",
 			err,
 		)
 	}
@@ -272,24 +234,6 @@ func (r *Repository) Create(
 		)
 	}
 
-	if _, err := tx.ExecContext(
-		ctx,
-		`
-			INSERT INTO task_branches (
-				task_id,
-				branch_name
-			)
-			VALUES (?, ?)
-		`,
-		taskID,
-		params.BranchName,
-	); err != nil {
-		return CreateResult{}, fmt.Errorf(
-			"failed to create task branch: %w",
-			err,
-		)
-	}
-
 	if err := tx.Commit(); err != nil {
 		return CreateResult{}, fmt.Errorf(
 			"failed to commit task transaction: %w",
@@ -326,7 +270,6 @@ func (r *Repository) FindByID(
 				t.description,
 				t.assignee_user_id,
 				u.display_name,
-				tb.branch_name,
 				t.status,
 				t.priority,
 				t.start_date,
@@ -339,8 +282,6 @@ func (r *Repository) FindByID(
 				ON p.id = t.project_id
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
-			INNER JOIN task_branches tb
-				ON tb.task_id = t.id
 			WHERE t.id = ?
 			  AND t.project_id = ?
 		`,
@@ -356,7 +297,6 @@ func (r *Repository) FindByID(
 		&description,
 		&response.AssigneeUserID,
 		&response.AssigneeName,
-		&response.BranchName,
 		&response.Status,
 		&response.Priority,
 		&startDate,
@@ -405,7 +345,6 @@ func (r *Repository) FindAllByProjectID(
 				t.description,
 				t.assignee_user_id,
 				u.display_name,
-				tb.branch_name,
 				t.status,
 				t.priority,
 				t.start_date,
@@ -418,8 +357,6 @@ func (r *Repository) FindAllByProjectID(
 				ON p.id = t.project_id
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
-			INNER JOIN task_branches tb
-				ON tb.task_id = t.id
 			WHERE t.project_id = ?
 			ORDER BY
 				t.created_at DESC,
@@ -473,7 +410,6 @@ func (r *Repository) FindAllAccessible(
 				t.description,
 				t.assignee_user_id,
 				u.display_name,
-				tb.branch_name,
 				t.status,
 				t.priority,
 				t.start_date,
@@ -486,8 +422,6 @@ func (r *Repository) FindAllAccessible(
 				ON p.id = t.project_id
 			INNER JOIN users u
 				ON u.id = t.assignee_user_id
-			INNER JOIN task_branches tb
-				ON tb.task_id = t.id
 			WHERE p.company_id = ?
 			ORDER BY
 				t.created_at DESC,
@@ -600,23 +534,6 @@ func (r *Repository) Update(
 		)
 	}
 
-	_, err = tx.ExecContext(
-		ctx,
-		`
-			UPDATE task_branches
-			SET branch_name = ?
-			WHERE task_id = ?
-		`,
-		params.BranchName,
-		params.TaskID,
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to update task branch: %w",
-			err,
-		)
-	}
-
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf(
 			"failed to commit task update transaction: %w",
@@ -688,7 +605,6 @@ func scanTaskResponse(
 		&description,
 		&response.AssigneeUserID,
 		&response.AssigneeName,
-		&response.BranchName,
 		&response.Status,
 		&response.Priority,
 		&startDate,

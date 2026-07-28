@@ -41,12 +41,6 @@ type repositoryInterface interface {
 		taskKey string,
 	) (*TaskMatch, error)
 
-	FindTaskByBranch(
-		ctx context.Context,
-		projectID uint64,
-		branchName string,
-	) (*TaskMatch, error)
-
 	SaveWorkContext(
 		ctx context.Context,
 		params StartSessionParams,
@@ -152,7 +146,6 @@ func (s *Service) WorkContext(
 			ctx,
 			repository.ProjectID,
 			ticketKey,
-			branchName,
 		)
 	if err != nil {
 		return WorkContextResponse{}, err
@@ -404,29 +397,12 @@ func (s *Service) resolveTaskMatch(
 	ctx context.Context,
 	projectID uint64,
 	ticketKey *string,
-	branchName string,
 ) (
 	*TaskMatch,
 	string,
 	error,
 ) {
 	if ticketKey == nil {
-		branchTask, err :=
-			s.repository.FindTaskByBranch(
-				ctx,
-				projectID,
-				branchName,
-			)
-		if err != nil {
-			return nil, "", err
-		}
-
-		if branchTask == nil {
-			return nil,
-				MatchStatusBranchNotMatched,
-				nil
-		}
-
 		return nil,
 			MatchStatusTicketNotFound,
 			nil
@@ -444,12 +420,6 @@ func (s *Service) resolveTaskMatch(
 	if taskByKey == nil {
 		return nil,
 			MatchStatusTicketNotFound,
-			nil
-	}
-
-	if taskByKey.BranchName != branchName {
-		return nil,
-			MatchStatusTicketBranchMismatch,
 			nil
 	}
 

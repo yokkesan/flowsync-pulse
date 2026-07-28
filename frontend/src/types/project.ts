@@ -20,6 +20,7 @@ export type Project = {
     company_id: number;
     name: string;
     slug: string;
+    repository_url: string | null;
     description: string | null;
     status: ProjectStatus;
     start_date: string | null;
@@ -37,6 +38,7 @@ export type ProjectListResponse = {
 export type ProjectWriteRequest = {
     name: string;
     slug: string;
+    repository_url: string;
     description: string | null;
     status: ProjectStatus;
     start_date: string | null;

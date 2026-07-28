@@ -17,7 +17,6 @@ export type Task = {
     description: string | null;
     assignee_user_id: number;
     assignee_name: string;
-    branch_name: string;
     status: TaskStatus;
     priority: TaskPriority;
     start_date: string | null;
@@ -35,7 +34,6 @@ export type TaskWriteRequest = {
     name: string;
     description: string | null;
     assignee_user_id: number;
-    branch_name: string;
     status: TaskStatus;
     priority: TaskPriority;
     start_date: string | null;
