@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import {
+    useEffect,
+    useState,
+} from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { AppSidebar } from '../../components/layout/AppSidebar';
@@ -7,14 +10,88 @@ import { OfficeControls } from '../../components/office/OfficeControls';
 import { OfficeSwitcher } from '../../components/office/OfficeSwitcher';
 import { officeRooms } from '../../constants/officeRooms';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAccessToken } from '../../services/authStorage';
+import { connectRealtimeSocket } from '../../services/realtimeSocket';
 
 import type { OfficeRoomId } from '../../types/office';
+import type { WorkContextChangedPayload } from '../../types/realtime';
 
 export function VirtualOfficePage() {
     const { status, user } = useAuth();
 
     const [selectedRoomId, setSelectedRoomId] =
         useState<OfficeRoomId>('main-office');
+
+    const [workContext, setWorkContext] =
+        useState<WorkContextChangedPayload | null>(
+            null,
+        );
+
+    useEffect(() => {
+        if (
+            status !== 'authenticated' ||
+            !user
+        ) {
+            return;
+        }
+
+        const accessToken = getAccessToken();
+
+        if (!accessToken) {
+            return;
+        }
+
+        let socket: WebSocket | null = null;
+        let disposed = false;
+
+        const connect = async () => {
+            try {
+                const connectedSocket =
+                    await connectRealtimeSocket({
+                        accessToken,
+                        onEvent: (event) => {
+                            if (
+                                event.type !==
+                                'work_context.changed'
+                            ) {
+                                return;
+                            }
+
+                            if (
+                                event.payload.user_id !==
+                                user.id
+                            ) {
+                                return;
+                            }
+
+                            setWorkContext(
+                                event.payload,
+                            );
+                        },
+                    });
+
+                if (disposed) {
+                    connectedSocket.close();
+                    return;
+                }
+
+                socket = connectedSocket;
+            } catch {
+                // 接続失敗時の表示・再接続処理は
+                // 後続で実装します。
+            }
+        };
+
+        void connect();
+
+        return () => {
+            disposed = true;
+            socket?.close();
+        };
+    }, [
+        status,
+        user,
+    ]);
 
     if (status === 'checking') {
         return (
@@ -97,6 +174,7 @@ export function VirtualOfficePage() {
 
                     <OfficeAvatar
                         displayName={user.display_name}
+                        workContext={workContext}
                     />
                 </section>
 
