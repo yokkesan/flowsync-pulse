@@ -8,8 +8,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext';
 
+import type {
+    WorkContextChangedPayload,
+} from '../../types/realtime';
+
 type OfficeAvatarProps = {
     displayName: string;
+    workContext: WorkContextChangedPayload | null;
 };
 
 type AvatarPosition = {
@@ -27,18 +32,59 @@ type DragState = {
 
 const DRAG_THRESHOLD_PX = 5;
 
-function getAvatarInitial(displayName: string): string {
-    const normalizedDisplayName = displayName.trim();
+function getAvatarInitial(
+    displayName: string,
+): string {
+    const normalizedDisplayName =
+        displayName.trim();
 
     if (!normalizedDisplayName) {
         return '?';
     }
 
-    return Array.from(normalizedDisplayName)[0];
+    return Array.from(
+        normalizedDisplayName,
+    )[0];
+}
+
+function getWorkContextLabel(
+    workContext: WorkContextChangedPayload | null,
+): string | null {
+    if (
+        !workContext ||
+        !workContext.extension_active
+    ) {
+        return null;
+    }
+
+    const taskName =
+        workContext.task_name?.trim();
+
+    if (taskName) {
+        return taskName;
+    }
+
+    const ticketKey =
+        workContext.task_key?.trim() ||
+        workContext.ticket_key?.trim();
+
+    if (ticketKey) {
+        return ticketKey;
+    }
+
+    const branchName =
+        workContext.branch_name?.trim();
+
+    if (branchName) {
+        return branchName;
+    }
+
+    return null;
 }
 
 export function OfficeAvatar({
     displayName,
+    workContext,
 }: OfficeAvatarProps) {
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -52,22 +98,38 @@ export function OfficeAvatar({
     const menuRef =
         useRef<HTMLDivElement | null>(null);
 
-    const hasDraggedRef = useRef(false);
+    const hasDraggedRef =
+        useRef(false);
 
-    const [avatarPosition, setAvatarPosition] =
-        useState<AvatarPosition>({
-            x: 50,
-            y: 58,
-        });
+    const [
+        avatarPosition,
+        setAvatarPosition,
+    ] = useState<AvatarPosition>({
+        x: 50,
+        y: 58,
+    });
 
-    const [dragState, setDragState] =
-        useState<DragState | null>(null);
+    const [
+        dragState,
+        setDragState,
+    ] = useState<DragState | null>(
+        null,
+    );
 
-    const [isMenuOpen, setIsMenuOpen] =
-        useState(false);
+    const [
+        isMenuOpen,
+        setIsMenuOpen,
+    ] = useState(false);
 
     const avatarInitial =
-        getAvatarInitial(displayName);
+        getAvatarInitial(
+            displayName,
+        );
+
+    const workContextLabel =
+        getWorkContextLabel(
+            workContext,
+        );
 
     useEffect(() => {
         if (!isMenuOpen) {
@@ -79,13 +141,19 @@ export function OfficeAvatar({
         ) => {
             const target = event.target;
 
-            if (!(target instanceof Node)) {
+            if (
+                !(target instanceof Node)
+            ) {
                 return;
             }
 
             if (
-                avatarRef.current?.contains(target) ||
-                menuRef.current?.contains(target)
+                avatarRef.current?.contains(
+                    target,
+                ) ||
+                menuRef.current?.contains(
+                    target,
+                )
             ) {
                 return;
             }
@@ -96,7 +164,9 @@ export function OfficeAvatar({
         const handleDocumentKeyDown = (
             event: KeyboardEvent,
         ) => {
-            if (event.key === 'Escape') {
+            if (
+                event.key === 'Escape'
+            ) {
                 setIsMenuOpen(false);
             }
         };
@@ -127,7 +197,8 @@ export function OfficeAvatar({
     const handlePointerDown = (
         event: ReactPointerEvent<HTMLDivElement>,
     ) => {
-        const avatarLayer = avatarLayerRef.current;
+        const avatarLayer =
+            avatarLayerRef.current;
 
         if (!avatarLayer) {
             return;
@@ -146,19 +217,29 @@ export function OfficeAvatar({
             (avatarPosition.y / 100) *
                 layerRect.height;
 
-        event.currentTarget.setPointerCapture(
-            event.pointerId,
-        );
+        event.currentTarget
+            .setPointerCapture(
+                event.pointerId,
+            );
 
-        hasDraggedRef.current = false;
+        hasDraggedRef.current =
+            false;
+
         setIsMenuOpen(false);
 
         setDragState({
-            pointerId: event.pointerId,
-            offsetX: event.clientX - avatarX,
-            offsetY: event.clientY - avatarY,
-            startClientX: event.clientX,
-            startClientY: event.clientY,
+            pointerId:
+                event.pointerId,
+            offsetX:
+                event.clientX -
+                avatarX,
+            offsetY:
+                event.clientY -
+                avatarY,
+            startClientX:
+                event.clientX,
+            startClientY:
+                event.clientY,
         });
     };
 
@@ -167,31 +248,40 @@ export function OfficeAvatar({
     ) => {
         if (
             !dragState ||
-            dragState.pointerId !== event.pointerId
+            dragState.pointerId !==
+                event.pointerId
         ) {
             return;
         }
 
         const movedX = Math.abs(
-            event.clientX - dragState.startClientX,
+            event.clientX -
+                dragState.startClientX,
         );
 
         const movedY = Math.abs(
-            event.clientY - dragState.startClientY,
+            event.clientY -
+                dragState.startClientY,
         );
 
         if (
-            movedX >= DRAG_THRESHOLD_PX ||
-            movedY >= DRAG_THRESHOLD_PX
+            movedX >=
+                DRAG_THRESHOLD_PX ||
+            movedY >=
+                DRAG_THRESHOLD_PX
         ) {
-            hasDraggedRef.current = true;
+            hasDraggedRef.current =
+                true;
         }
 
-        if (!hasDraggedRef.current) {
+        if (
+            !hasDraggedRef.current
+        ) {
             return;
         }
 
-        const avatarLayer = avatarLayerRef.current;
+        const avatarLayer =
+            avatarLayerRef.current;
 
         if (!avatarLayer) {
             return;
@@ -215,8 +305,14 @@ export function OfficeAvatar({
             100;
 
         setAvatarPosition({
-            x: Math.min(96, Math.max(4, x)),
-            y: Math.min(92, Math.max(8, y)),
+            x: Math.min(
+                96,
+                Math.max(4, x),
+            ),
+            y: Math.min(
+                92,
+                Math.max(8, y),
+            ),
         });
     };
 
@@ -225,19 +321,22 @@ export function OfficeAvatar({
     ) => {
         if (
             !dragState ||
-            dragState.pointerId !== event.pointerId
+            dragState.pointerId !==
+                event.pointerId
         ) {
             return;
         }
 
         if (
-            event.currentTarget.hasPointerCapture(
-                event.pointerId,
-            )
+            event.currentTarget
+                .hasPointerCapture(
+                    event.pointerId,
+                )
         ) {
-            event.currentTarget.releasePointerCapture(
-                event.pointerId,
-            );
+            event.currentTarget
+                .releasePointerCapture(
+                    event.pointerId,
+                );
         }
 
         const shouldOpenMenu =
@@ -246,9 +345,11 @@ export function OfficeAvatar({
         setDragState(null);
 
         if (shouldOpenMenu) {
-            setIsMenuOpen((currentValue) => {
-                return !currentValue;
-            });
+            setIsMenuOpen(
+                (currentValue) => {
+                    return !currentValue;
+                },
+            );
         }
     };
 
@@ -275,6 +376,9 @@ export function OfficeAvatar({
                     isMenuOpen
                         ? 'virtual-office-avatar--menu-open'
                         : '',
+                    workContextLabel
+                        ? 'virtual-office-avatar--working'
+                        : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
@@ -282,11 +386,25 @@ export function OfficeAvatar({
                     left: `${avatarPosition.x}%`,
                     top: `${avatarPosition.y}%`,
                 }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                onPointerDown={
+                    handlePointerDown
+                }
+                onPointerMove={
+                    handlePointerMove
+                }
+                onPointerUp={
+                    handlePointerUp
+                }
+                onPointerCancel={
+                    handlePointerUp
+                }
             >
+                {workContextLabel && (
+                    <div className="virtual-office-avatar__work-context">
+                        {workContextLabel}
+                    </div>
+                )}
+
                 <div
                     className="virtual-office-avatar__icon"
                     aria-hidden="true"
@@ -304,7 +422,9 @@ export function OfficeAvatar({
                         className="virtual-office-avatar__menu"
                         role="menu"
                         aria-label={`${displayName}のユーザーメニュー`}
-                        onPointerDown={(event) => {
+                        onPointerDown={(
+                            event,
+                        ) => {
                             event.stopPropagation();
                         }}
                     >
@@ -316,7 +436,9 @@ export function OfficeAvatar({
                             className="virtual-office-avatar__menu-button virtual-office-avatar__menu-button--logout"
                             type="button"
                             role="menuitem"
-                            onClick={handleLogout}
+                            onClick={
+                                handleLogout
+                            }
                         >
                             ログアウト
                         </button>
