@@ -243,6 +243,93 @@ func (h *Handler) Disconnect(
 	)
 }
 
+// CurrentWorkContext godoc
+// @Summary 現在の作業情報取得
+// @Description ログインユーザーの現在進行中の作業情報を取得します。
+// @Tags work-context
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} CurrentWorkContextResponse
+// @Success 204
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/work-context/current [get]
+func (h *Handler) CurrentWorkContext(
+	c *gin.Context,
+) {
+	userIDValue, userIDExists := c.Get(
+		middleware.ContextUserIDKey,
+	)
+
+	companyIDValue, companyIDExists := c.Get(
+		middleware.ContextCompanyIDKey,
+	)
+
+	if !userIDExists || !companyIDExists {
+		c.JSON(
+			http.StatusUnauthorized,
+			ErrorResponse{
+				Message: "ログイン情報が取得できません。",
+			},
+		)
+		return
+	}
+
+	userID, userIDValid :=
+		userIDValue.(uint64)
+
+	companyID, companyIDValid :=
+		companyIDValue.(uint64)
+
+	if !userIDValid ||
+		!companyIDValid ||
+		userID == 0 ||
+		companyID == 0 {
+		c.JSON(
+			http.StatusUnauthorized,
+			ErrorResponse{
+				Message: "ログイン情報が無効です。",
+			},
+		)
+		return
+	}
+
+	response, err :=
+		h.service.CurrentWorkContext(
+			c.Request.Context(),
+			userID,
+			companyID,
+		)
+	if err != nil {
+		log.Printf(
+			"failed to get current work context: user_id=%d company_id=%d error=%v",
+			userID,
+			companyID,
+			err,
+		)
+
+		c.JSON(
+			http.StatusInternalServerError,
+			ErrorResponse{
+				Message: "現在の作業情報の取得に失敗しました。",
+			},
+		)
+		return
+	}
+
+	if response == nil {
+		c.Status(
+			http.StatusNoContent,
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		response,
+	)
+}
+
 func (h *Handler) handleError(
 	c *gin.Context,
 	err error,

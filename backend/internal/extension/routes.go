@@ -35,4 +35,10 @@ func RegisterRoutes(
 		"/disconnect",
 		handler.Disconnect,
 	)
+
+	api.GET(
+		"/work-context/current",
+		middleware.Authenticate(),
+		handler.CurrentWorkContext,
+	)
 }
