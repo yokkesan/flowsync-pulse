@@ -57,6 +57,12 @@ type repositoryInterface interface {
 		userID uint64,
 		occurredAt time.Time,
 	) (*DisconnectResult, error)
+
+	FindCurrentWorkContext(
+		ctx context.Context,
+		userID uint64,
+		companyID uint64,
+	) (*CurrentWorkContextRecord, error)
 }
 
 type Service struct {
@@ -580,4 +586,44 @@ func normalizeOccurredAt(
 	}
 
 	return occurredAt.UTC(), nil
+}
+
+func (s *Service) CurrentWorkContext(
+	ctx context.Context,
+	userID uint64,
+	companyID uint64,
+) (*CurrentWorkContextResponse, error) {
+	record, err := s.repository.FindCurrentWorkContext(
+		ctx,
+		userID,
+		companyID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if record == nil {
+		return nil, nil
+	}
+
+	return &CurrentWorkContextResponse{
+		UserID:          record.UserID,
+		ProjectID:       record.ProjectID,
+		ProjectName:     record.ProjectName,
+		RepositoryID:    record.RepositoryID,
+		RepositoryName:  record.RepositoryName,
+		TaskID:          record.TaskID,
+		TaskKey:         record.TaskKey,
+		TaskName:        record.TaskName,
+		BranchName:      record.BranchName,
+		TicketKey:       record.TicketKey,
+		WorkspaceName:   record.WorkspaceName,
+		MatchStatus:     record.MatchStatus,
+		SessionStatus:   record.Status,
+		ExtensionActive: true,
+		StartedAt:       record.StartedAt,
+		LastHeartbeatAt: record.LastHeartbeatAt,
+		EndedAt:         nil,
+		EndReason:       nil,
+	}, nil
 }

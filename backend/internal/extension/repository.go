@@ -75,6 +75,24 @@ type DisconnectResult struct {
 	EndedAt   time.Time
 }
 
+type CurrentWorkContextRecord struct {
+	UserID          uint64
+	ProjectID       uint64
+	ProjectName     string
+	RepositoryID    uint64
+	RepositoryName  string
+	TaskID          *uint64
+	TaskKey         *string
+	TaskName        *string
+	BranchName      string
+	TicketKey       *string
+	WorkspaceName   *string
+	MatchStatus     string
+	Status          string
+	StartedAt       time.Time
+	LastHeartbeatAt time.Time
+}
+
 func NewRepository(
 	db *sql.DB,
 ) *Repository {
@@ -722,4 +740,107 @@ func endActiveSession(
 	}
 
 	return nil
+}
+
+func (r *Repository) FindCurrentWorkContext(
+	ctx context.Context,
+	userID uint64,
+	companyID uint64,
+) (*CurrentWorkContextRecord, error) {
+	var record CurrentWorkContextRecord
+
+	var taskID sql.NullInt64
+	var taskKey sql.NullString
+	var taskName sql.NullString
+	var ticketKey sql.NullString
+	var workspaceName sql.NullString
+
+	err := r.db.QueryRowContext(
+		ctx,
+		`
+			SELECT
+				ws.user_id,
+				ws.project_id,
+				p.name,
+				ws.repository_id,
+				r.name,
+				ws.task_id,
+				t.task_key,
+				t.name,
+				ws.branch_name,
+				ws.ticket_key,
+				ws.workspace_name,
+				ws.match_status,
+				ws.status,
+				ws.started_at,
+				ws.last_heartbeat_at
+			FROM work_sessions AS ws
+			INNER JOIN projects AS p
+				ON p.id = ws.project_id
+			INNER JOIN repositories AS r
+				ON r.id = ws.repository_id
+			LEFT JOIN tasks AS t
+				ON t.id = ws.task_id
+			WHERE ws.user_id = ?
+			  AND p.company_id = ?
+			  AND ws.status = 'active'
+			ORDER BY ws.id DESC
+			LIMIT 1
+		`,
+		userID,
+		companyID,
+	).Scan(
+		&record.UserID,
+		&record.ProjectID,
+		&record.ProjectName,
+		&record.RepositoryID,
+		&record.RepositoryName,
+		&taskID,
+		&taskKey,
+		&taskName,
+		&record.BranchName,
+		&ticketKey,
+		&workspaceName,
+		&record.MatchStatus,
+		&record.Status,
+		&record.StartedAt,
+		&record.LastHeartbeatAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf(
+			"failed to find current work context: %w",
+			err,
+		)
+	}
+
+	if taskID.Valid {
+		value := uint64(taskID.Int64)
+		record.TaskID = &value
+	}
+
+	if taskKey.Valid {
+		value := taskKey.String
+		record.TaskKey = &value
+	}
+
+	if taskName.Valid {
+		value := taskName.String
+		record.TaskName = &value
+	}
+
+	if ticketKey.Valid {
+		value := ticketKey.String
+		record.TicketKey = &value
+	}
+
+	if workspaceName.Valid {
+		value := workspaceName.String
+		record.WorkspaceName = &value
+	}
+
+	return &record, nil
 }

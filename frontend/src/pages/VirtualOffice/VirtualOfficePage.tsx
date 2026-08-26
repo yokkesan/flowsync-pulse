@@ -11,6 +11,9 @@ import { OfficeSwitcher } from '../../components/office/OfficeSwitcher';
 import { officeRooms } from '../../constants/officeRooms';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAccessToken } from '../../services/authStorage';
+import {
+    getCurrentWorkContext,
+} from '../../services/realtimeApi';
 import { connectRealtimeSocket } from '../../services/realtimeSocket';
 
 import type { OfficeRoomId } from '../../types/office';
@@ -46,6 +49,25 @@ export function VirtualOfficePage() {
 
         const connect = async () => {
             try {
+                const currentWorkContext =
+                    await getCurrentWorkContext(
+                        accessToken,
+                    );
+
+                if (disposed) {
+                    return;
+                }
+
+                if (
+                    currentWorkContext &&
+                    currentWorkContext.user_id ===
+                        user.id
+                ) {
+                    setWorkContext(
+                        currentWorkContext,
+                    );
+                }
+
                 const connectedSocket =
                     await connectRealtimeSocket({
                         accessToken,

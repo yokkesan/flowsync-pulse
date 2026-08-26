@@ -11,6 +11,27 @@ export type RealtimeConnectionTicketResponse = {
     expires_at: string;
 };
 
+export type CurrentWorkContextResponse = {
+    user_id: number;
+    project_id: number;
+    project_name: string;
+    repository_id: number;
+    repository_name: string;
+    task_id: number | null;
+    task_key: string | null;
+    task_name: string | null;
+    branch_name: string;
+    ticket_key: string | null;
+    workspace_name: string | null;
+    match_status: string;
+    session_status: string;
+    extension_active: boolean;
+    started_at: string;
+    last_heartbeat_at: string;
+    ended_at: string | null;
+    end_reason: string | null;
+};
+
 export class RealtimeApiError extends Error {
     status: number;
 
@@ -19,6 +40,7 @@ export class RealtimeApiError extends Error {
         status: number,
     ) {
         super(message);
+
         this.name = 'RealtimeApiError';
         this.status = status;
     }
@@ -84,6 +106,43 @@ export async function createRealtimeConnectionTicket(
         RealtimeConnectionTicketResponse;
 }
 
+export async function getCurrentWorkContext(
+    accessToken: string,
+): Promise<CurrentWorkContextResponse | null> {
+    const normalizedAccessToken =
+        accessToken.trim();
+
+    if (!normalizedAccessToken) {
+        throw new RealtimeApiError(
+            'ログイン情報がありません。',
+            401,
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/work-context/current`,
+        {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                Authorization:
+                    `Bearer ${normalizedAccessToken}`,
+            },
+        },
+    );
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw await parseErrorResponse(response);
+    }
+
+    return (await response.json()) as
+        CurrentWorkContextResponse;
+}
+
 export function buildRealtimeWebSocketUrl(
     ticket: string,
 ): string {
@@ -96,7 +155,8 @@ export function buildRealtimeWebSocketUrl(
         );
     }
 
-    const apiUrl = new URL(API_BASE_URL);
+    const apiUrl =
+        new URL(API_BASE_URL);
 
     apiUrl.protocol =
         apiUrl.protocol === 'https:'
@@ -106,9 +166,10 @@ export function buildRealtimeWebSocketUrl(
     apiUrl.pathname =
         `${apiUrl.pathname.replace(/\/+$/, '')}/realtime/ws`;
 
-    apiUrl.search = new URLSearchParams({
-        ticket: normalizedTicket,
-    }).toString();
+    apiUrl.search =
+        new URLSearchParams({
+            ticket: normalizedTicket,
+        }).toString();
 
     return apiUrl.toString();
 }
