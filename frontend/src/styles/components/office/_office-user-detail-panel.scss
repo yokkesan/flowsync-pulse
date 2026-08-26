@@ -1,0 +1,74 @@
+@use '../../foundation/variables' as variables;
+@use '../../foundation/mixins' as mixins;
+
+.office-user-detail-panel {
+    position: sticky;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    padding: 24px 20px;
+    background: variables.$color-surface;
+    border-left: 1px solid variables.$color-border;
+
+    &__header {
+        padding-bottom: 20px;
+        border-bottom: 1px solid variables.$color-border;
+    }
+
+    &__eyebrow {
+        margin: 0 0 6px;
+        color: variables.$color-text-secondary;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    &__name {
+        margin: 0;
+        color: variables.$color-text-primary;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    &__content {
+        margin-top: 24px;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin: 0;
+    }
+
+    &__item {
+        dt {
+            margin-bottom: 4px;
+            color: variables.$color-text-secondary;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        dd {
+            margin: 0;
+            color: variables.$color-text-primary;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    &__empty {
+        margin: 0;
+        color: variables.$color-text-secondary;
+        font-size: 13px;
+    }
+
+    @include mixins.mobile {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-left: 0;
+        border-top: 1px solid variables.$color-border;
+    }
+}

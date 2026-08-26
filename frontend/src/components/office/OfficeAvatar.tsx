@@ -15,6 +15,7 @@ import type {
 type OfficeAvatarProps = {
     displayName: string;
     workContext: WorkContextChangedPayload | null;
+    onSelect: () => void;
 };
 
 type AvatarPosition = {
@@ -85,6 +86,7 @@ function getWorkContextLabel(
 export function OfficeAvatar({
     displayName,
     workContext,
+    onSelect,
 }: OfficeAvatarProps) {
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -345,6 +347,8 @@ export function OfficeAvatar({
         setDragState(null);
 
         if (shouldOpenMenu) {
+            onSelect();
+
             setIsMenuOpen(
                 (currentValue) => {
                     return !currentValue;

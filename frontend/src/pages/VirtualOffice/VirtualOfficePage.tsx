@@ -8,6 +8,7 @@ import { AppSidebar } from '../../components/layout/AppSidebar';
 import { OfficeAvatar } from '../../components/office/OfficeAvatar';
 import { OfficeControls } from '../../components/office/OfficeControls';
 import { OfficeSwitcher } from '../../components/office/OfficeSwitcher';
+import { OfficeUserDetailPanel } from '../../components/office/OfficeUserDetailPanel';
 import { officeRooms } from '../../constants/officeRooms';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAccessToken } from '../../services/authStorage';
@@ -29,6 +30,9 @@ export function VirtualOfficePage() {
         useState<WorkContextChangedPayload | null>(
             null,
         );
+
+    const [selectedUserId, setSelectedUserId] =
+        useState<number | null>(null);
 
     useEffect(() => {
         if (
@@ -145,6 +149,16 @@ export function VirtualOfficePage() {
         );
     }
 
+    const selectedUserWorkContext =
+        selectedUserId === user.id
+            ? workContext
+            : null;
+
+    const selectedUserDisplayName =
+        selectedUserId === user.id
+            ? user.display_name
+            : '';
+
     return (
         <div className="virtual-office-layout">
             <AppSidebar
@@ -197,11 +211,25 @@ export function VirtualOfficePage() {
                     <OfficeAvatar
                         displayName={user.display_name}
                         workContext={workContext}
+                        onSelect={() => {
+                            setSelectedUserId(
+                                user.id,
+                            );
+                        }}
                     />
                 </section>
 
                 <OfficeControls />
             </main>
+
+            <OfficeUserDetailPanel
+                displayName={
+                    selectedUserDisplayName
+                }
+                workContext={
+                    selectedUserWorkContext
+                }
+            />
         </div>
     );
 }

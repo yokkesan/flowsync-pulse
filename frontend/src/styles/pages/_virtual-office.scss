@@ -3,7 +3,10 @@
 
 .virtual-office-layout {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns:
+        240px
+        minmax(0, 1fr)
+        280px;
     min-height: 100vh;
 }
 
